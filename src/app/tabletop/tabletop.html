@@ -1,0 +1,78 @@
+<div class="tabletop-container">
+  <!-- Panel de control -->
+  <aside class="control-panel">
+    <h2>Configuración</h2>
+
+    <!-- Configurar cuadrícula -->
+    <div class="control-section">
+      <h3>Cuadrícula</h3>
+      <label>
+        Tamaño celda (px):
+        <input type="number" [(ngModel)]="gridSize" (change)="updateGridDimensions()" min="20" max="100">
+      </label>
+      <label>
+        Columnas:
+        <input type="number" [(ngModel)]="gridColumns" (change)="updateGridDimensions()" min="5" max="50">
+      </label>
+      <label>
+        Filas:
+        <input type="number" [(ngModel)]="gridRows" (change)="updateGridDimensions()" min="5" max="50">
+      </label>
+    </div>
+
+    <!-- Zoom -->
+    <div class="control-section">
+      <h3>Zoom</h3>
+      <div class="zoom-controls">
+        <button (click)="zoomOut()" class="btn-zoom">−</button>
+        <span class="zoom-level">{{ (zoomLevel * 100).toFixed(0) }}%</span>
+        <button (click)="zoomIn()" class="btn-zoom">+</button>
+      </div>
+      <button (click)="resetZoom()" class="btn-reset">Resetear</button>
+    </div>
+
+    <!-- Subir imagen de fondo -->
+    <div class="control-section">
+      <h3>Fondo</h3>
+      <input type="file" accept="image/*" (change)="onImageUpload($event)">
+      <p *ngIf="backgroundImage" class="success">✓ Imagen cargada</p>
+    </div>
+
+    <!-- Agregar tokens -->
+    <div class="control-section">
+      <h3>Tokens</h3>
+      <button (click)="addToken()" class="btn-add">+ Agregar Token</button>
+      <p>Total: {{ tokens.length }}</p>
+    </div>
+  </aside>
+
+ <!-- Área del tablero -->
+  <main #tabletopMain class="tabletop-main">
+    <div #gridWrapper
+         class="grid-wrapper"
+         [style.width.px]="gridColumns * gridSize * zoomLevel"
+         [style.height.px]="gridRows * gridSize * zoomLevel"
+         [style.backgroundImage]="backgroundImage ? 'url(' + backgroundImage + ')' : 'none'">
+      
+      <!-- Cuadrícula de fondo -->
+      <div class="grid"
+           [style.gridTemplateColumns]="'repeat(' + gridColumns + ', 1fr)'"
+           [style.gridTemplateRows]="'repeat(' + gridRows + ', 1fr)'">
+        <div class="grid-cell" *ngFor="let i of [].constructor(gridColumns * gridRows)"></div>
+      </div>
+
+      <!-- Tokens -->
+      <div class="token" 
+           *ngFor="let token of tokens"
+           [style.width.px]="getScaledGridSize()"
+           [style.height.px]="getScaledGridSize()"
+           [style.left.px]="token.x * getScaledGridSize()"
+           [style.top.px]="token.y * getScaledGridSize()"
+           [style.backgroundColor]="token.color"
+           (mousedown)="startDrag($event, token)">
+        <span>{{ token.id }}</span>
+        <button (click)="removeToken(token.id)" class="btn-remove">×</button>
+      </div>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,150 @@
+.tabletop-container {
+  display: flex;
+  height: 100vh;
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+}
+
+/* Panel de control */
+.control-panel {
+  width: 250px;
+  background-color: #2a2a2a;
+  padding: 1.5rem;
+  overflow-y: auto;
+  border-right: 1px solid #444;
+}
+
+.control-panel h2 {
+  margin-bottom: 1.5rem;
+  color: #3b82f6;
+  font-size: 1.25rem;
+}
+
+.control-section {
+  margin-bottom: 1.5rem;
+}
+
+.control-section h3 {
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+  color: #888;
+}
+
+.control-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.control-section input {
+  width: 100%;
+  padding: 0.5rem;
+  margin-top: 0.25rem;
+  background-color: #333;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #e0e0e0;
+}
+
+.btn-add {
+  width: 100%;
+  padding: 0.75rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-add:hover {
+  background-color: #2563eb;
+}
+
+.success {
+  color: #10b981;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+/* Área principal */
+.tabletop-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  overflow: auto;
+}
+
+.grid-wrapper {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  border: 2px solid #555;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Cuadrícula */
+.grid {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0.3;
+}
+
+.grid-cell {
+  border: 1px solid #555;
+}
+
+/* Tokens */
+.token {
+  position: absolute;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: move;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  user-select: none;
+  box-sizing: border-box; /* ✅ El borde se incluye en el tamaño */
+}
+
+.token:hover {
+  opacity: 1;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+.token span {
+  color: white;
+  font-weight: bold;
+  font-size: 0.8rem;
+  pointer-events: none;
+}
+
+.btn-remove {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: none;
+  z-index: 10; /* ✅ NUEVO: Para que aparezca encima */
+}
+
+.token:hover .btn-remove {
+  display: block;
+}

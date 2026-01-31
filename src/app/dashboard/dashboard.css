@@ -1,0 +1,150 @@
+.dashboard-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+.dark .dashboard-container {
+  background-color: #0f172a;
+  color: #e5e7eb;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 2rem;
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.dark .dashboard-header {
+  background-color: #1c1f27;
+  border-bottom-color: #374151;
+}
+
+.dashboard-header .header-content h1 {
+  font-size: 1.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-header .header-content p {
+  color: #6b7280;
+}
+
+.dark .dashboard-header .header-content p {
+  color: #9da6b9;
+}
+
+.dashboard-header .logout-btn {
+  background-color: #ef4444;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.dashboard-header .logout-btn:hover {
+  background-color: #dc2626;
+}
+
+.dashboard-main {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.welcome-section,
+.placeholder-section {
+  background-color: white;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.dark .welcome-section,
+.dark .placeholder-section {
+  background-color: #1c1f27;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.welcome-section h2,
+.placeholder-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: #3b82f6;
+}
+
+.user-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.user-info p {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.user-info p strong {
+  color: #3b82f6;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.placeholder-section ul {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 0;
+  margin: 0;
+}
+
+.placeholder-section li {
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  border-left: 4px solid #3b82f6;
+}
+
+.dark .placeholder-section li {
+  background-color: #111318;
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .dashboard-header .header-content {
+    width: 100%;
+  }
+
+  .dashboard-header .header-content h1 {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-header .logout-btn {
+    width: 100%;
+  }
+
+  .dashboard-main {
+    padding: 1rem;
+  }
+
+  .welcome-section,
+  .placeholder-section {
+    padding: 1.5rem;
+  }
+}

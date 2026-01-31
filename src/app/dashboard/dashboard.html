@@ -1,0 +1,31 @@
+<div class="dashboard-container">
+  <header class="dashboard-header">
+    <div class="header-content">
+      <h1>Panel de Control - VTT Nexus</h1>
+      <p>Bienvenido, </p> <!-- {{ currentUser?.name }} -->
+    </div>
+    <button class="logout-btn">Cerrar Sesión</button> <!-- (click)="logout()" -->
+  </header>
+
+  <main class="dashboard-main">
+    <section class="welcome-section">
+      <h2>Tu Cuenta</h2>
+      <div class="user-info">
+        <p><strong>Email:</strong></p>  <!-- {{ currentUser?.email }} -->
+        <p><strong>Rol:</strong> </p><!--  {{ currentUser?.role === 'DUNGEON_MASTER' ? 'Director de Juego' : 'Jugador' }} -->
+        <p><strong>ID:</strong> </p> <!-- {{ currentUser?.id }} -->
+      </div>
+    </section>
+
+    <section class="placeholder-section">
+      <h2>Próximas Funcionalidades</h2>
+      <ul>
+        <li>🎮 Crear y gestionar partidas</li>
+        <li>👥 Unirse a partidas existentes</li>
+        <li>🎲 Tiradas de dados</li>
+        <li>💬 Chat en tiempo real</li>
+        <li (click)="goToTabletop()">🗺️ Tablero interactivo</li>
+      </ul>
+    </section>
+  </main>
+</div>
