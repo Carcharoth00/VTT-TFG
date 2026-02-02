@@ -13,6 +13,15 @@
       
       <div *ngIf="!isConnected">
         <label>
+          Nombre de Usuario:
+          <input 
+            type="text" 
+            [(ngModel)]="username" 
+            placeholder="Tu nombre"
+            (keyup.enter)="joinRoom()"
+            maxlength="20">
+        </label>
+        <label>
           ID de Sala:
           <input 
             type="text" 
@@ -20,7 +29,7 @@
             placeholder="Ej: room123"
             (keyup.enter)="joinRoom()">
         </label>
-        <button (click)="joinRoom()" class="btn-connect" [disabled]="!roomId.trim()">
+        <button (click)="joinRoom()" class="btn-connect" [disabled]="!roomId.trim() || !username.trim()">
           Unirse a Sala
         </button>
       </div>
@@ -141,4 +150,85 @@
       </div>
     </div>
   </main>
+
+  <!-- Panel de Chat -->
+  <aside class="chat-panel" [class.closed]="!isChatOpen">
+    <div class="chat-header">
+      <h3>💬 Chat</h3>
+      <button (click)="toggleChat()" class="btn-toggle-chat">
+        {{ isChatOpen ? '▶' : '◀' }}
+      </button>
+    </div>
+
+    <div class="chat-content" *ngIf="isChatOpen">
+      <!-- Quick Dice Buttons -->
+      <div class="quick-dice">
+        <button (click)="quickRoll('d20')" class="btn-dice" title="Tirar d20">d20</button>
+        <button (click)="quickRoll('d12')" class="btn-dice" title="Tirar d12">d12</button>
+        <button (click)="quickRoll('d10')" class="btn-dice" title="Tirar d10">d10</button>
+        <button (click)="quickRoll('d8')" class="btn-dice" title="Tirar d8">d8</button>
+        <button (click)="quickRoll('d6')" class="btn-dice" title="Tirar d6">d6</button>
+        <button (click)="quickRoll('d4')" class="btn-dice" title="Tirar d4">d4</button>
+      </div>
+
+      <!-- Messages -->
+      <div class="chat-messages">
+        <div *ngFor="let msg of chatMessages" 
+             class="chat-message"
+             [class.chat-message-dice]="msg.type === 'dice'"
+             [class.chat-message-system]="msg.type === 'system'">
+          
+          <div class="message-header">
+            <span class="message-username">{{ msg.username }}</span>
+            <span class="message-time">{{ formatTimestamp(msg.timestamp) }}</span>
+          </div>
+
+          <div class="message-content">
+            <span *ngIf="msg.type === 'message'">{{ msg.message }}</span>
+            
+            <div *ngIf="msg.type === 'dice' && msg.diceRoll" class="dice-result">
+              <div class="dice-formula">🎲 {{ msg.diceRoll.formula }}</div>
+              <div class="dice-rolls">
+                <span *ngFor="let die of msg.diceRoll.individualDice" 
+                      class="die-result"
+                      [class.die-critical]="die.result === die.sides"
+                      [class.die-fumble]="die.result === 1">
+                  {{ die.result }}
+                </span>
+              </div>
+              <div class="dice-total">Total: <strong>{{ msg.diceRoll.total }}</strong></div>
+            </div>
+
+            <span *ngIf="msg.type === 'system'" class="system-text">
+              ℹ️ {{ msg.message }}
+            </span>
+          </div>
+        </div>
+
+        <div *ngIf="chatMessages.length === 0" class="chat-empty">
+          No hay mensajes aún. ¡Sé el primero en escribir!
+        </div>
+      </div>
+
+      <!-- Input -->
+      <div class="chat-input-container">
+        <input 
+          type="text"
+          [(ngModel)]="newMessage"
+          (keyup.enter)="sendMessage()"
+          placeholder="Mensaje o /roll 2d6+3"
+          class="chat-input"
+          [disabled]="!isConnected">
+        <button (click)="sendMessage()" 
+                class="btn-send"
+                [disabled]="!isConnected || !newMessage.trim()">
+          Enviar
+        </button>
+      </div>
+
+      <div class="chat-help">
+        <small>💡 Usa /roll o /r para tirar dados (ej: /roll 2d6+3)</small>
+      </div>
+    </div>
+  </aside>
 </div>

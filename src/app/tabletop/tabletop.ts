@@ -18,11 +18,29 @@ interface GridConfig {
   rows: number;
 }
 
+interface ChatMessage {
+  id: string;
+  userId: string;
+  username: string;
+  message: string;
+  timestamp: Date;
+  type: 'message' | 'dice' | 'system';
+  diceRoll?: DiceRoll;
+}
+
+interface DiceRoll {
+  formula: string;
+  results: number[];
+  total: number;
+  individualDice?: { sides: number; result: number }[];
+}
+
 interface RoomState {
   tokens: Token[];
   gridConfig: GridConfig;
   backgroundImage: string | null;
   zoomLevel: number;
+  chatMessages: ChatMessage[];
 }
 
 @Component({
@@ -50,6 +68,12 @@ export class Tabletop implements OnInit, OnDestroy {
   private socket!: Socket;
   roomId: string = '';
   isConnected = false;
+  username: string = '';
+
+  // Chat
+  chatMessages: ChatMessage[] = [];
+  newMessage: string = '';
+  isChatOpen = true;
 
   constructor(private cdr: ChangeDetectorRef) {}
 
@@ -94,6 +118,7 @@ export class Tabletop implements OnInit, OnDestroy {
       this.gridRows = state.gridConfig.rows;
       this.backgroundImage = state.backgroundImage;
       this.zoomLevel = state.zoomLevel;
+      this.chatMessages = state.chatMessages || [];
       this.cdr.markForCheck();
     });
 
@@ -137,12 +162,31 @@ export class Tabletop implements OnInit, OnDestroy {
       this.zoomLevel = zoom;
       this.cdr.markForCheck();
     });
+
+    // Chat events
+    this.socket.on('chat-message', (message: ChatMessage) => {
+      this.chatMessages.push(message);
+      this.cdr.markForCheck();
+      this.scrollChatToBottom();
+    });
+
+    this.socket.on('dice-rolled', (message: ChatMessage) => {
+      this.chatMessages.push(message);
+      this.cdr.markForCheck();
+      this.scrollChatToBottom();
+    });
+
+    this.socket.on('system-message', (message: ChatMessage) => {
+      this.chatMessages.push(message);
+      this.cdr.markForCheck();
+      this.scrollChatToBottom();
+    });
   }
 
   joinRoom() {
-    if (this.roomId.trim()) {
+    if (this.roomId.trim() && this.username.trim()) {
       this.socket.connect();
-      this.socket.emit('join-room', this.roomId);
+      this.socket.emit('join-room', { roomId: this.roomId, username: this.username });
     }
   }
 
@@ -309,5 +353,123 @@ export class Tabletop implements OnInit, OnDestroy {
   // Generar array para la cuadrícula
   getGridCells(): number[] {
     return Array(this.gridColumns * this.gridRows).fill(0).map((_, i) => i);
+  }
+
+  // ========== CHAT ==========
+
+  toggleChat() {
+    this.isChatOpen = !this.isChatOpen;
+  }
+
+  sendMessage() {
+    if (!this.newMessage.trim() || !this.isConnected) return;
+
+    // Verificar si es un comando de dado (ej: /roll 2d6+3, /r d20)
+    const diceRegex = /^\/r(?:oll)?\s+(.+)$/i;
+    const match = this.newMessage.trim().match(diceRegex);
+
+    if (match) {
+      this.rollDice(match[1].trim());
+    } else {
+      const message: ChatMessage = {
+        id: Date.now().toString(),
+        userId: this.socket.id || '',
+        username: this.username,
+        message: this.newMessage,
+        timestamp: new Date(),
+        type: 'message',
+      };
+
+      this.socket.emit('send-message', { roomId: this.roomId, message });
+    }
+
+    this.newMessage = '';
+  }
+
+  rollDice(formula: string) {
+    const diceRoll = this.parseDiceFormula(formula);
+    
+    if (!diceRoll) {
+      // Fórmula inválida
+      const errorMessage: ChatMessage = {
+        id: Date.now().toString(),
+        userId: 'system',
+        username: 'Sistema',
+        message: `Fórmula de dados inválida: ${formula}. Usa formato como "2d6+3", "d20", "3d8-2"`,
+        timestamp: new Date(),
+        type: 'system',
+      };
+      this.chatMessages.push(errorMessage);
+      this.scrollChatToBottom();
+      return;
+    }
+
+    const message: ChatMessage = {
+      id: Date.now().toString(),
+      userId: this.socket.id || '',
+      username: this.username,
+      message: `Tiró ${formula}`,
+      timestamp: new Date(),
+      type: 'dice',
+      diceRoll,
+    };
+
+    this.socket.emit('roll-dice', { roomId: this.roomId, message });
+  }
+
+  parseDiceFormula(formula: string): DiceRoll | null {
+    // Formato: NdX+M o NdX-M o dX o NdX
+    // Ejemplos: 2d6+3, d20, 3d8-2, 4d6
+    const regex = /^(\d*)d(\d+)([+\-]\d+)?$/i;
+    const match = formula.trim().match(regex);
+
+    if (!match) return null;
+
+    const count = match[1] ? parseInt(match[1]) : 1;
+    const sides = parseInt(match[2]);
+    const modifier = match[3] ? parseInt(match[3]) : 0;
+
+    if (count < 1 || count > 100 || sides < 2 || sides > 1000) {
+      return null;
+    }
+
+    const results: number[] = [];
+    const individualDice: { sides: number; result: number }[] = [];
+    
+    for (let i = 0; i < count; i++) {
+      const roll = Math.floor(Math.random() * sides) + 1;
+      results.push(roll);
+      individualDice.push({ sides, result: roll });
+    }
+
+    const total = results.reduce((sum, r) => sum + r, 0) + modifier;
+
+    return {
+      formula,
+      results,
+      total,
+      individualDice,
+    };
+  }
+
+  private scrollChatToBottom() {
+    setTimeout(() => {
+      const chatContainer = document.querySelector('.chat-messages');
+      if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }, 100);
+  }
+
+  formatTimestamp(date: Date): string {
+    const d = new Date(date);
+    const hours = d.getHours().toString().padStart(2, '0');
+    const minutes = d.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  }
+
+  // Atajos de teclado para dados comunes
+  quickRoll(formula: string) {
+    this.rollDice(formula);
   }
 }
