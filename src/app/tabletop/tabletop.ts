@@ -1,145 +1,313 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CdkDragDrop, DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
+import { io, Socket } from 'socket.io-client';
+
+interface Token {
+  id: number;
+  x: number;
+  y: number;
+  color: string;
+  label?: string;
+}
+
+interface GridConfig {
+  size: number;
+  columns: number;
+  rows: number;
+}
+
+interface RoomState {
+  tokens: Token[];
+  gridConfig: GridConfig;
+  backgroundImage: string | null;
+  zoomLevel: number;
+}
 
 @Component({
   selector: 'app-tabletop',
-  imports: [CommonModule, FormsModule],
+  standalone: true,
+  imports: [CommonModule, FormsModule, DragDropModule],
   templateUrl: './tabletop.html',
   styleUrl: './tabletop.css',
 })
-export class Tabletop {
+export class Tabletop implements OnInit, OnDestroy {
   @ViewChild('gridWrapper') gridWrapper!: ElementRef;
 
-  gridSize = 50; // Tamaño de cada celda en píxeles
-  gridColumns = 10; // Número de columnas
-  gridRows = 10; // Número de filas
+  // Grid configuration
+  gridSize = 50;
+  gridColumns = 10;
+  gridRows = 10;
   backgroundImage: string | null = null;
   zoomLevel = 1;
 
-  // Array para almacenar tokens
-  tokens: { id: number; x: number; y: number; color: string }[] = [];
+  // Tokens
+  tokens: Token[] = [];
   nextTokenId = 1;
 
-  // Variables para drag and drop
-  draggingToken: { id: number; x: number; y: number; color: string } | null = null;
-  dragOffsetX = 0;
-  dragOffsetY = 0;
+  // Socket.IO
+  private socket!: Socket;
+  roomId: string = '';
+  isConnected = false;
 
-  constructor(private cdr: ChangeDetectorRef) { }
+  constructor(private cdr: ChangeDetectorRef) {}
 
-  //Caputar tamaño de celda escalado para escalar los tokens
+  ngOnInit() {
+    this.initializeSocket();
+  }
+
+  ngOnDestroy() {
+    if (this.socket) {
+      this.socket.disconnect();
+    }
+  }
+
+  // ========== SOCKET.IO ==========
+
+  private initializeSocket() {
+    // Conectar al servidor Socket.IO (ajusta la URL según tu backend)
+    this.socket = io('http://localhost:3000', {
+      transports: ['websocket'],
+      autoConnect: false,
+    });
+
+    // Eventos de conexión
+    this.socket.on('connect', () => {
+      console.log('Conectado al servidor Socket.IO');
+      this.isConnected = true;
+      this.cdr.markForCheck();
+    });
+
+    this.socket.on('disconnect', () => {
+      console.log('Desconectado del servidor');
+      this.isConnected = false;
+      this.cdr.markForCheck();
+    });
+
+    // Recibir estado inicial de la sala
+    this.socket.on('room-state', (state: RoomState) => {
+      console.log('Estado de la sala recibido:', state);
+      this.tokens = state.tokens;
+      this.gridSize = state.gridConfig.size;
+      this.gridColumns = state.gridConfig.columns;
+      this.gridRows = state.gridConfig.rows;
+      this.backgroundImage = state.backgroundImage;
+      this.zoomLevel = state.zoomLevel;
+      this.cdr.markForCheck();
+    });
+
+    // Sincronizar tokens
+    this.socket.on('token-added', (token: Token) => {
+      const exists = this.tokens.find(t => t.id === token.id);
+      if (!exists) {
+        this.tokens.push(token);
+        this.cdr.markForCheck();
+      }
+    });
+
+    this.socket.on('token-moved', (data: { id: number; x: number; y: number }) => {
+      const token = this.tokens.find(t => t.id === data.id);
+      if (token) {
+        token.x = data.x;
+        token.y = data.y;
+        this.cdr.markForCheck();
+      }
+    });
+
+    this.socket.on('token-removed', (tokenId: number) => {
+      this.tokens = this.tokens.filter(t => t.id !== tokenId);
+      this.cdr.markForCheck();
+    });
+
+    // Sincronizar configuración
+    this.socket.on('grid-updated', (config: GridConfig) => {
+      this.gridSize = config.size;
+      this.gridColumns = config.columns;
+      this.gridRows = config.rows;
+      this.cdr.markForCheck();
+    });
+
+    this.socket.on('background-updated', (imageData: string | null) => {
+      this.backgroundImage = imageData;
+      this.cdr.markForCheck();
+    });
+
+    this.socket.on('zoom-updated', (zoom: number) => {
+      this.zoomLevel = zoom;
+      this.cdr.markForCheck();
+    });
+  }
+
+  joinRoom() {
+    if (this.roomId.trim()) {
+      this.socket.connect();
+      this.socket.emit('join-room', this.roomId);
+    }
+  }
+
+  leaveRoom() {
+    if (this.roomId) {
+      this.socket.emit('leave-room', this.roomId);
+      this.socket.disconnect();
+      this.roomId = '';
+      this.isConnected = false;
+    }
+  }
+
+  // ========== GRID & ZOOM ==========
+
   getScaledGridSize(): number {
     return this.gridSize * this.zoomLevel;
   }
 
-  // Zoom IN
   zoomIn() {
     if (this.zoomLevel < 3) {
       this.zoomLevel += 0.2;
+      this.emitZoomUpdate();
       this.cdr.markForCheck();
     }
   }
 
-  // Zoom OUT
   zoomOut() {
     if (this.zoomLevel > 0.5) {
       this.zoomLevel -= 0.2;
+      this.emitZoomUpdate();
       this.cdr.markForCheck();
     }
   }
 
-  //Reset Zoom
   resetZoom() {
     this.zoomLevel = 1;
+    this.emitZoomUpdate();
     this.cdr.markForCheck();
   }
 
-  // Actualizar dimensiones de la cuadrícula
-  updateGridDimensions() {
-    console.log(`Grid actualizado: ${this.gridColumns}x${this.gridRows}, tamaño celda: ${this.gridSize}px`);
+  private emitZoomUpdate() {
+    if (this.isConnected) {
+      this.socket.emit('update-zoom', { roomId: this.roomId, zoom: this.zoomLevel });
+    }
   }
 
-  // Subir imagen de fondo
+  updateGridDimensions() {
+    console.log(`Grid actualizado: ${this.gridColumns}x${this.gridRows}, tamaño celda: ${this.gridSize}px`);
+    
+    if (this.isConnected) {
+      const config: GridConfig = {
+        size: this.gridSize,
+        columns: this.gridColumns,
+        rows: this.gridRows,
+      };
+      this.socket.emit('update-grid', { roomId: this.roomId, config });
+    }
+  }
+
+  // ========== BACKGROUND IMAGE ==========
+
   onImageUpload(event: any) {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.backgroundImage = e.target.result;
+        
+        if (this.isConnected) {
+          this.socket.emit('update-background', {
+            roomId: this.roomId,
+            image: this.backgroundImage,
+          });
+        }
+        
         this.cdr.markForCheck();
       };
       reader.readAsDataURL(file);
     }
   }
 
-  // Agregar token a la cuadrícula
+  removeBackground() {
+    this.backgroundImage = null;
+    if (this.isConnected) {
+      this.socket.emit('update-background', {
+        roomId: this.roomId,
+        image: null,
+      });
+    }
+  }
+
+  // ========== TOKENS (CDK Drag & Drop) ==========
+
   addToken() {
-    const token = {
+    const token: Token = {
       id: this.nextTokenId++,
       x: 0,
       y: 0,
-      color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+      color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
+      label: `T${this.nextTokenId - 1}`,
     };
+    
     this.tokens.push(token);
-  }
 
-  // Iniciar drag
-  startDrag(event: MouseEvent, token: { id: number; x: number; y: number; color: string }) {
-    event.preventDefault();
-    this.draggingToken = token;
-
-    // Calcular offset del ratón respecto a la posición del token
-    const tokenElement = (event.target as HTMLElement).closest('.token') as HTMLElement;
-    if (tokenElement) {
-      const rect = tokenElement.getBoundingClientRect();
-      this.dragOffsetX = event.clientX - rect.left;
-      this.dragOffsetY = event.clientY - rect.top;
+    if (this.isConnected) {
+      this.socket.emit('add-token', { roomId: this.roomId, token });
     }
-
-    document.addEventListener('mousemove', this.onMouseMove.bind(this));
-    document.addEventListener('mouseup', this.endDrag.bind(this));
   }
 
-  // Durante el drag
-  onMouseMove = (event: MouseEvent) => {
-    if (!this.draggingToken || !this.gridWrapper) return;
-
-    const gridElement = this.gridWrapper.nativeElement;
-    const gridRect = gridElement.getBoundingClientRect();
-    const scaledGridSize = this.getScaledGridSize();
-
-    // Calcular posición del ratón relativa a la cuadrícula
-    let mouseX = event.clientX - gridRect.left - this.dragOffsetX;
-    let mouseY = event.clientY - gridRect.top - this.dragOffsetY;
-
-    // Limitar a los bordes de la cuadrícula (usando scaledGridSize)
-    mouseX = Math.max(0, Math.min(mouseX, gridRect.width - scaledGridSize));
-    mouseY = Math.max(0, Math.min(mouseY, gridRect.height - scaledGridSize));
-
-    // Convertir píxeles a celdas de la cuadrícula (usando scaledGridSize)
-    this.draggingToken.x = Math.floor(mouseX / scaledGridSize);
-    this.draggingToken.y = Math.floor(mouseY / scaledGridSize);
-
-    // Limitar a las dimensiones de la cuadrícula
-    this.draggingToken.x = Math.min(this.draggingToken.x, this.gridColumns - 1);
-    this.draggingToken.y = Math.min(this.draggingToken.y, this.gridRows - 1);
-
-    this.cdr.markForCheck();
-  };
-
-  // Finalizar drag
-  endDrag = () => {
-    this.draggingToken = null;
-    this.cdr.markForCheck();
-    document.removeEventListener('mousemove', this.onMouseMove.bind(this));
-    document.removeEventListener('mouseup', this.endDrag.bind(this));
-  };
-
-  // Eliminar token
   removeToken(id: number) {
     this.tokens = this.tokens.filter(t => t.id !== id);
+
+    if (this.isConnected) {
+      this.socket.emit('remove-token', { roomId: this.roomId, tokenId: id });
+    }
   }
 
+  // CDK Drag Drop Event
+  onTokenDragEnded(event: CdkDragEnd, token: Token) {
+    const scaledGridSize = this.getScaledGridSize();
+    const distance = event.distance;
+    
+    // Calcular nueva posición basada en el desplazamiento
+    const deltaX = distance.x;
+    const deltaY = distance.y;
+    
+    // Calcular nueva posición en celdas
+    const currentPixelX = token.x * scaledGridSize;
+    const currentPixelY = token.y * scaledGridSize;
+    
+    const newPixelX = currentPixelX + deltaX;
+    const newPixelY = currentPixelY + deltaY;
+    
+    // Convertir a coordenadas de celda
+    let newX = Math.round(newPixelX / scaledGridSize);
+    let newY = Math.round(newPixelY / scaledGridSize);
+    
+    // Limitar a los bordes de la cuadrícula
+    newX = Math.max(0, Math.min(newX, this.gridColumns - 1));
+    newY = Math.max(0, Math.min(newY, this.gridRows - 1));
+    
+    // Actualizar posición del token
+    token.x = newX;
+    token.y = newY;
+    
+    // Emitir actualización
+    if (this.isConnected) {
+      this.socket.emit('move-token', {
+        roomId: this.roomId,
+        tokenId: token.id,
+        x: newX,
+        y: newY,
+      });
+    }
+    
+    this.cdr.markForCheck();
+  }
 
+  // Obtener el ID del token para el trackBy
+  trackByTokenId(index: number, token: Token): number {
+    return token.id;
+  }
+
+  // Generar array para la cuadrícula
+  getGridCells(): number[] {
+    return Array(this.gridColumns * this.gridRows).fill(0).map((_, i) => i);
+  }
 }

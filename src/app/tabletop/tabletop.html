@@ -1,22 +1,67 @@
 <div class="tabletop-container">
   <!-- Panel de control -->
   <aside class="control-panel">
-    <h2>Configuración</h2>
+    <h2>VTT - Virtual Tabletop</h2>
+
+    <!-- Conexión Socket.IO -->
+    <div class="control-section connection-section">
+      <h3>Conexión Multiplayer</h3>
+      <div class="connection-status" [class.connected]="isConnected">
+        <span class="status-indicator"></span>
+        {{ isConnected ? 'Conectado' : 'Desconectado' }}
+      </div>
+      
+      <div *ngIf="!isConnected">
+        <label>
+          ID de Sala:
+          <input 
+            type="text" 
+            [(ngModel)]="roomId" 
+            placeholder="Ej: room123"
+            (keyup.enter)="joinRoom()">
+        </label>
+        <button (click)="joinRoom()" class="btn-connect" [disabled]="!roomId.trim()">
+          Unirse a Sala
+        </button>
+      </div>
+      
+      <div *ngIf="isConnected">
+        <p class="room-info">Sala: <strong>{{ roomId }}</strong></p>
+        <button (click)="leaveRoom()" class="btn-disconnect">
+          Salir de la Sala
+        </button>
+      </div>
+    </div>
 
     <!-- Configurar cuadrícula -->
     <div class="control-section">
       <h3>Cuadrícula</h3>
       <label>
         Tamaño celda (px):
-        <input type="number" [(ngModel)]="gridSize" (change)="updateGridDimensions()" min="20" max="100">
+        <input 
+          type="number" 
+          [(ngModel)]="gridSize" 
+          (change)="updateGridDimensions()" 
+          min="20" 
+          max="100">
       </label>
       <label>
         Columnas:
-        <input type="number" [(ngModel)]="gridColumns" (change)="updateGridDimensions()" min="5" max="50">
+        <input 
+          type="number" 
+          [(ngModel)]="gridColumns" 
+          (change)="updateGridDimensions()" 
+          min="5" 
+          max="50">
       </label>
       <label>
         Filas:
-        <input type="number" [(ngModel)]="gridRows" (change)="updateGridDimensions()" min="5" max="50">
+        <input 
+          type="number" 
+          [(ngModel)]="gridRows" 
+          (change)="updateGridDimensions()" 
+          min="5" 
+          max="50">
       </label>
     </div>
 
@@ -28,25 +73,42 @@
         <span class="zoom-level">{{ (zoomLevel * 100).toFixed(0) }}%</span>
         <button (click)="zoomIn()" class="btn-zoom">+</button>
       </div>
-      <button (click)="resetZoom()" class="btn-reset">Resetear</button>
+      <button (click)="resetZoom()" class="btn-reset">Resetear Zoom</button>
     </div>
 
     <!-- Subir imagen de fondo -->
     <div class="control-section">
-      <h3>Fondo</h3>
-      <input type="file" accept="image/*" (change)="onImageUpload($event)">
+      <h3>Fondo del Tablero</h3>
+      <input type="file" accept="image/*" (change)="onImageUpload($event)" #fileInput>
       <p *ngIf="backgroundImage" class="success">✓ Imagen cargada</p>
+      <button 
+        *ngIf="backgroundImage" 
+        (click)="removeBackground(); fileInput.value=''" 
+        class="btn-danger">
+        Eliminar Fondo
+      </button>
     </div>
 
     <!-- Agregar tokens -->
     <div class="control-section">
-      <h3>Tokens</h3>
+      <h3>Tokens / Fichas</h3>
       <button (click)="addToken()" class="btn-add">+ Agregar Token</button>
-      <p>Total: {{ tokens.length }}</p>
+      <p class="token-count">Total en tablero: <strong>{{ tokens.length }}</strong></p>
+    </div>
+
+    <!-- Info -->
+    <div class="control-section info-section">
+      <h3>ℹ️ Instrucciones</h3>
+      <ul class="instructions">
+        <li>Arrastra los tokens para moverlos</li>
+        <li>Haz clic en la × para eliminarlos</li>
+        <li>Comparte el ID de sala para jugar con otros</li>
+        <li>Usa Ctrl+Scroll para zoom rápido</li>
+      </ul>
     </div>
   </aside>
 
- <!-- Área del tablero -->
+  <!-- Área del tablero -->
   <main #tabletopMain class="tabletop-main">
     <div #gridWrapper
          class="grid-wrapper"
@@ -58,20 +120,24 @@
       <div class="grid"
            [style.gridTemplateColumns]="'repeat(' + gridColumns + ', 1fr)'"
            [style.gridTemplateRows]="'repeat(' + gridRows + ', 1fr)'">
-        <div class="grid-cell" *ngFor="let i of [].constructor(gridColumns * gridRows)"></div>
+        <div class="grid-cell" *ngFor="let i of getGridCells()"></div>
       </div>
 
-      <!-- Tokens -->
+      <!-- Tokens con CDK Drag & Drop -->
       <div class="token" 
-           *ngFor="let token of tokens"
+           *ngFor="let token of tokens; trackBy: trackByTokenId"
+           cdkDrag
+           [cdkDragFreeDragPosition]="{x: token.x * getScaledGridSize(), y: token.y * getScaledGridSize()}"
+           (cdkDragEnded)="onTokenDragEnded($event, token)"
            [style.width.px]="getScaledGridSize()"
            [style.height.px]="getScaledGridSize()"
-           [style.left.px]="token.x * getScaledGridSize()"
-           [style.top.px]="token.y * getScaledGridSize()"
-           [style.backgroundColor]="token.color"
-           (mousedown)="startDrag($event, token)">
-        <span>{{ token.id }}</span>
-        <button (click)="removeToken(token.id)" class="btn-remove">×</button>
+           [style.backgroundColor]="token.color">
+        
+        <span class="token-label">{{ token.label || token.id }}</span>
+        <button 
+          (click)="removeToken(token.id)" 
+          class="btn-remove"
+          title="Eliminar token">×</button>
       </div>
     </div>
   </main>
