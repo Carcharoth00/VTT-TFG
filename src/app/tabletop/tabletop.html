@@ -1,7 +1,16 @@
 <div class="tabletop-container">
-  <!-- Panel de control -->
-  <aside class="control-panel">
+ <aside class="control-panel">
+  <!-- Botón volver atrás -->
+  <div class="header-controls">
+    <button 
+      *ngIf="isConnected" 
+      (click)="goBack()" 
+      class="btn-back"
+      title="Desconectar y volver">
+      ← Volver
+    </button>
     <h2>VTT - Virtual Tabletop</h2>
+  </div>
 
     <!-- Conexión Socket.IO -->
     <div class="control-section connection-section">
@@ -10,30 +19,21 @@
         <span class="status-indicator"></span>
         {{ isConnected ? 'Conectado' : 'Desconectado' }}
       </div>
-      
+
       <div *ngIf="!isConnected">
         <label>
           Nombre de Usuario:
-          <input 
-            type="text" 
-            [(ngModel)]="username" 
-            placeholder="Tu nombre"
-            (keyup.enter)="joinRoom()"
-            maxlength="20">
+          <input type="text" [(ngModel)]="username" placeholder="Tu nombre" (keyup.enter)="joinRoom()" maxlength="20">
         </label>
         <label>
           ID de Sala:
-          <input 
-            type="text" 
-            [(ngModel)]="roomId" 
-            placeholder="Ej: room123"
-            (keyup.enter)="joinRoom()">
+          <input type="text" [(ngModel)]="roomId" placeholder="Ej: room123" (keyup.enter)="joinRoom()">
         </label>
         <button (click)="joinRoom()" class="btn-connect" [disabled]="!roomId.trim() || !username.trim()">
           Unirse a Sala
         </button>
       </div>
-      
+
       <div *ngIf="isConnected">
         <p class="room-info">Sala: <strong>{{ roomId }}</strong></p>
         <button (click)="leaveRoom()" class="btn-disconnect">
@@ -47,30 +47,15 @@
       <h3>Cuadrícula</h3>
       <label>
         Tamaño celda (px):
-        <input 
-          type="number" 
-          [(ngModel)]="gridSize" 
-          (change)="updateGridDimensions()" 
-          min="20" 
-          max="100">
+        <input type="number" [(ngModel)]="gridSize" (change)="updateGridDimensions()" min="20" max="100">
       </label>
       <label>
         Columnas:
-        <input 
-          type="number" 
-          [(ngModel)]="gridColumns" 
-          (change)="updateGridDimensions()" 
-          min="5" 
-          max="50">
+        <input type="number" [(ngModel)]="gridColumns" (change)="updateGridDimensions()" min="5" max="50">
       </label>
       <label>
         Filas:
-        <input 
-          type="number" 
-          [(ngModel)]="gridRows" 
-          (change)="updateGridDimensions()" 
-          min="5" 
-          max="50">
+        <input type="number" [(ngModel)]="gridRows" (change)="updateGridDimensions()" min="5" max="50">
       </label>
     </div>
 
@@ -88,13 +73,22 @@
     <!-- Subir imagen de fondo -->
     <div class="control-section">
       <h3>Fondo del Tablero</h3>
-      <input type="file" accept="image/*" (change)="onImageUpload($event)" #fileInput>
-      <p *ngIf="backgroundImage" class="success">✓ Imagen cargada</p>
-      <button 
-        *ngIf="backgroundImage" 
-        (click)="removeBackground(); fileInput.value=''" 
-        class="btn-danger">
-        Eliminar Fondo
+
+      <!-- Input oculto -->
+      <input type="file" accept="image/*" (change)="onImageUpload($event)" #fileInput style="display: none;">
+
+      <!-- Botón personalizado -->
+      <button (click)="fileInput.click()" class="btn-upload">
+        <span class="upload-icon">📁</span>
+        {{ backgroundImage ? 'Cambiar Imagen' : 'Subir Imagen' }}
+      </button>
+
+      <p *ngIf="backgroundImage" class="success">
+        ✓ Imagen cargada correctamente
+      </p>
+
+      <button *ngIf="backgroundImage" (click)="removeBackground(); fileInput.value=''" class="btn-danger">
+        🗑️ Eliminar Fondo
       </button>
     </div>
 
@@ -119,34 +113,24 @@
 
   <!-- Área del tablero -->
   <main #tabletopMain class="tabletop-main">
-    <div #gridWrapper
-         class="grid-wrapper"
-         [style.width.px]="gridColumns * gridSize * zoomLevel"
-         [style.height.px]="gridRows * gridSize * zoomLevel"
-         [style.backgroundImage]="backgroundImage ? 'url(' + backgroundImage + ')' : 'none'">
-      
+    <div #gridWrapper class="grid-wrapper" [style.width.px]="gridColumns * gridSize * zoomLevel"
+      [style.height.px]="gridRows * gridSize * zoomLevel"
+      [style.backgroundImage]="backgroundImage ? 'url(' + backgroundImage + ')' : 'none'">
+
       <!-- Cuadrícula de fondo -->
-      <div class="grid"
-           [style.gridTemplateColumns]="'repeat(' + gridColumns + ', 1fr)'"
-           [style.gridTemplateRows]="'repeat(' + gridRows + ', 1fr)'">
+      <div class="grid" [style.gridTemplateColumns]="'repeat(' + gridColumns + ', 1fr)'"
+        [style.gridTemplateRows]="'repeat(' + gridRows + ', 1fr)'">
         <div class="grid-cell" *ngFor="let i of getGridCells()"></div>
       </div>
 
       <!-- Tokens con CDK Drag & Drop -->
-      <div class="token" 
-           *ngFor="let token of tokens; trackBy: trackByTokenId"
-           cdkDrag
-           [cdkDragFreeDragPosition]="{x: token.x * getScaledGridSize(), y: token.y * getScaledGridSize()}"
-           (cdkDragEnded)="onTokenDragEnded($event, token)"
-           [style.width.px]="getScaledGridSize()"
-           [style.height.px]="getScaledGridSize()"
-           [style.backgroundColor]="token.color">
-        
+      <div class="token" *ngFor="let token of tokens; trackBy: trackByTokenId" cdkDrag
+        [cdkDragFreeDragPosition]="{x: token.x * getScaledGridSize(), y: token.y * getScaledGridSize()}"
+        (cdkDragEnded)="onTokenDragEnded($event, token)" [style.width.px]="getScaledGridSize()"
+        [style.height.px]="getScaledGridSize()" [style.backgroundColor]="token.color">
+
         <span class="token-label">{{ token.label || token.id }}</span>
-        <button 
-          (click)="removeToken(token.id)" 
-          class="btn-remove"
-          title="Eliminar token">×</button>
+        <button (click)="removeToken(token.id)" class="btn-remove" title="Eliminar token">×</button>
       </div>
     </div>
   </main>
@@ -173,11 +157,9 @@
 
       <!-- Messages -->
       <div class="chat-messages">
-        <div *ngFor="let msg of chatMessages" 
-             class="chat-message"
-             [class.chat-message-dice]="msg.type === 'dice'"
-             [class.chat-message-system]="msg.type === 'system'">
-          
+        <div *ngFor="let msg of chatMessages" class="chat-message" [class.chat-message-dice]="msg.type === 'dice'"
+          [class.chat-message-system]="msg.type === 'system'">
+
           <div class="message-header">
             <span class="message-username">{{ msg.username }}</span>
             <span class="message-time">{{ formatTimestamp(msg.timestamp) }}</span>
@@ -185,14 +167,12 @@
 
           <div class="message-content">
             <span *ngIf="msg.type === 'message'">{{ msg.message }}</span>
-            
+
             <div *ngIf="msg.type === 'dice' && msg.diceRoll" class="dice-result">
               <div class="dice-formula">🎲 {{ msg.diceRoll.formula }}</div>
               <div class="dice-rolls">
-                <span *ngFor="let die of msg.diceRoll.individualDice" 
-                      class="die-result"
-                      [class.die-critical]="die.result === die.sides"
-                      [class.die-fumble]="die.result === 1">
+                <span *ngFor="let die of msg.diceRoll.individualDice" class="die-result"
+                  [class.die-critical]="die.result === die.sides" [class.die-fumble]="die.result === 1">
                   {{ die.result }}
                 </span>
               </div>
@@ -212,16 +192,9 @@
 
       <!-- Input -->
       <div class="chat-input-container">
-        <input 
-          type="text"
-          [(ngModel)]="newMessage"
-          (keyup.enter)="sendMessage()"
-          placeholder="Mensaje o /roll 2d6+3"
-          class="chat-input"
-          [disabled]="!isConnected">
-        <button (click)="sendMessage()" 
-                class="btn-send"
-                [disabled]="!isConnected || !newMessage.trim()">
+        <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()" placeholder="Mensaje o /roll 2d6+3"
+          class="chat-input" [disabled]="!isConnected">
+        <button (click)="sendMessage()" class="btn-send" [disabled]="!isConnected || !newMessage.trim()">
           Enviar
         </button>
       </div>

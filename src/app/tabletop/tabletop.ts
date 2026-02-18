@@ -472,4 +472,18 @@ export class Tabletop implements OnInit, OnDestroy {
   quickRoll(formula: string) {
     this.rollDice(formula);
   }
+
+    goBack() {
+    // Confirmar antes de salir
+    const confirmLeave = confirm('¿Seguro que quieres salir de la sala?');
+    
+    if (confirmLeave) {
+      this.leaveRoom();
+      // Limpiar datos locales
+      this.tokens = [];
+      this.chatMessages = [];
+      this.backgroundImage = null;
+      this.zoomLevel = 1;
+    }
+  }
 }
