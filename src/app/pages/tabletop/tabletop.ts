@@ -4,45 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { io, Socket } from 'socket.io-client';
 import { Router } from '@angular/router';
-
-interface Token {
-  id: number;
-  x: number;
-  y: number;
-  color: string;
-  label?: string;
-}
-
-interface GridConfig {
-  size: number;
-  columns: number;
-  rows: number;
-}
-
-interface ChatMessage {
-  id: string;
-  userId: string;
-  username: string;
-  message: string;
-  timestamp: Date;
-  type: 'message' | 'dice' | 'system';
-  diceRoll?: DiceRoll;
-}
-
-interface DiceRoll {
-  formula: string;
-  results: number[];
-  total: number;
-  individualDice?: { sides: number; result: number }[];
-}
-
-interface RoomState {
-  tokens: Token[];
-  gridConfig: GridConfig;
-  backgroundImage: string | null;
-  zoomLevel: number;
-  chatMessages: ChatMessage[];
-}
+import { Token, GridConfig, ChatMessage, DiceRoll, RoomState } from "../../model/interfaces";
 
 @Component({
   selector: 'app-tabletop',

@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
-import { Dashboard } from './dashboard/dashboard';
-import { Tabletop } from './tabletop/tabletop';
+import { Dashboard } from './pages/dashboard/dashboard';
+import { Tabletop } from './pages/tabletop/tabletop';
 
 export const routes: Routes = [
     {
