@@ -1,1 +1,26 @@
-/* You can add global styles to this file, and also import other style files */
+/* styles.css - Estilos globales para el proyecto Angular VTT */
+
+/* Reset global */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Eliminar márgenes del componente root de Angular */
+app-root, app-tabletop {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}

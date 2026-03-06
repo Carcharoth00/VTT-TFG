@@ -3,6 +3,7 @@ import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild 
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { io, Socket } from 'socket.io-client';
+import { Router } from '@angular/router';
 
 interface Token {
   id: number;
@@ -75,7 +76,12 @@ export class Tabletop implements OnInit, OnDestroy {
   newMessage: string = '';
   isChatOpen = true;
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private router: Router
+  ) {
+    console.log('✅ Tabletop constructor - Router inyectado:', !!this.router);
+  }
 
   ngOnInit() {
     this.initializeSocket();
@@ -191,11 +197,48 @@ export class Tabletop implements OnInit, OnDestroy {
   }
 
   leaveRoom() {
+    console.log('🔴 leaveRoom() llamado');
+    console.log('🔴 Router disponible:', !!this.router);
+    
     if (this.roomId) {
       this.socket.emit('leave-room', this.roomId);
       this.socket.disconnect();
       this.roomId = '';
       this.isConnected = false;
+      
+      console.log('🔴 Intentando navegar a /dashboard...');
+      
+      // Navegación con promesa para debug
+      this.router.navigate(['/dashboard']).then(
+        success => console.log('✅ Navegación exitosa:', success),
+        error => console.error('❌ Error en navegación:', error)
+      );
+    } else {
+      console.warn('⚠️ No hay roomId, navegando de todos modos...');
+      this.router.navigate(['/dashboard']);
+    }
+  }
+
+  goBack() {
+    console.log('🔴 goBack() llamado');
+    
+    // Confirmar antes de salir
+    const confirmLeave = confirm('¿Seguro que quieres salir de la sala?');
+    console.log('🔴 Confirmación del usuario:', confirmLeave);
+
+    if (confirmLeave) {
+      console.log('🔴 Usuario confirmó, llamando a leaveRoom()');
+      this.leaveRoom();
+      
+      // Limpiar datos locales
+      this.tokens = [];
+      this.chatMessages = [];
+      this.backgroundImage = null;
+      this.zoomLevel = 1;
+      
+      console.log('🔴 Datos locales limpiados');
+    } else {
+      console.log('🔴 Usuario canceló la salida');
     }
   }
 
@@ -235,7 +278,7 @@ export class Tabletop implements OnInit, OnDestroy {
 
   updateGridDimensions() {
     console.log(`Grid actualizado: ${this.gridColumns}x${this.gridRows}, tamaño celda: ${this.gridSize}px`);
-    
+
     if (this.isConnected) {
       const config: GridConfig = {
         size: this.gridSize,
@@ -254,14 +297,14 @@ export class Tabletop implements OnInit, OnDestroy {
       const reader = new FileReader();
       reader.onload = (e: any) => {
         this.backgroundImage = e.target.result;
-        
+
         if (this.isConnected) {
           this.socket.emit('update-background', {
             roomId: this.roomId,
             image: this.backgroundImage,
           });
         }
-        
+
         this.cdr.markForCheck();
       };
       reader.readAsDataURL(file);
@@ -288,7 +331,7 @@ export class Tabletop implements OnInit, OnDestroy {
       color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
       label: `T${this.nextTokenId - 1}`,
     };
-    
+
     this.tokens.push(token);
 
     if (this.isConnected) {
@@ -308,30 +351,30 @@ export class Tabletop implements OnInit, OnDestroy {
   onTokenDragEnded(event: CdkDragEnd, token: Token) {
     const scaledGridSize = this.getScaledGridSize();
     const distance = event.distance;
-    
+
     // Calcular nueva posición basada en el desplazamiento
     const deltaX = distance.x;
     const deltaY = distance.y;
-    
+
     // Calcular nueva posición en celdas
     const currentPixelX = token.x * scaledGridSize;
     const currentPixelY = token.y * scaledGridSize;
-    
+
     const newPixelX = currentPixelX + deltaX;
     const newPixelY = currentPixelY + deltaY;
-    
+
     // Convertir a coordenadas de celda
     let newX = Math.round(newPixelX / scaledGridSize);
     let newY = Math.round(newPixelY / scaledGridSize);
-    
+
     // Limitar a los bordes de la cuadrícula
     newX = Math.max(0, Math.min(newX, this.gridColumns - 1));
     newY = Math.max(0, Math.min(newY, this.gridRows - 1));
-    
+
     // Actualizar posición del token
     token.x = newX;
     token.y = newY;
-    
+
     // Emitir actualización
     if (this.isConnected) {
       this.socket.emit('move-token', {
@@ -341,7 +384,7 @@ export class Tabletop implements OnInit, OnDestroy {
         y: newY,
       });
     }
-    
+
     this.cdr.markForCheck();
   }
 
@@ -388,7 +431,7 @@ export class Tabletop implements OnInit, OnDestroy {
 
   rollDice(formula: string) {
     const diceRoll = this.parseDiceFormula(formula);
-    
+
     if (!diceRoll) {
       // Fórmula inválida
       const errorMessage: ChatMessage = {
@@ -435,7 +478,7 @@ export class Tabletop implements OnInit, OnDestroy {
 
     const results: number[] = [];
     const individualDice: { sides: number; result: number }[] = [];
-    
+
     for (let i = 0; i < count; i++) {
       const roll = Math.floor(Math.random() * sides) + 1;
       results.push(roll);
@@ -471,19 +514,5 @@ export class Tabletop implements OnInit, OnDestroy {
   // Atajos de teclado para dados comunes
   quickRoll(formula: string) {
     this.rollDice(formula);
-  }
-
-    goBack() {
-    // Confirmar antes de salir
-    const confirmLeave = confirm('¿Seguro que quieres salir de la sala?');
-    
-    if (confirmLeave) {
-      this.leaveRoom();
-      // Limpiar datos locales
-      this.tokens = [];
-      this.chatMessages = [];
-      this.backgroundImage = null;
-      this.zoomLevel = 1;
-    }
   }
 }

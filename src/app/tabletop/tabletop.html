@@ -1,16 +1,9 @@
 <div class="tabletop-container">
- <aside class="control-panel">
-  <!-- Botón volver atrás -->
-  <div class="header-controls">
-    <button 
-      *ngIf="isConnected" 
-      (click)="goBack()" 
-      class="btn-back"
-      title="Desconectar y volver">
-      ← Volver
-    </button>
-    <h2>VTT - Virtual Tabletop</h2>
-  </div>
+  <aside class="control-panel">
+    <!-- Botón volver atrás -->
+    <div class="header-controls">
+      <h2>VTT - Virtual Tabletop</h2>
+    </div>
 
     <!-- Conexión Socket.IO -->
     <div class="control-section connection-section">
@@ -109,8 +102,16 @@
         <li>Usa Ctrl+Scroll para zoom rápido</li>
       </ul>
     </div>
-  </aside>
 
+
+    <!-- Salir del tablero -->
+    <div class="control-section exit-section">
+      <button (click)="goBack()" class="btn-exit">
+        🚪 Salir del Tablero
+      </button>
+    </div>
+  </aside>
+  
   <!-- Área del tablero -->
   <main #tabletopMain class="tabletop-main">
     <div #gridWrapper class="grid-wrapper" [style.width.px]="gridColumns * gridSize * zoomLevel"
