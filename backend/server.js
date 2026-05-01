@@ -4,8 +4,9 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 require('dotenv').config();
 const { setupSocketHandlers } = require('./sockets/handlers');
-
 const { testConnection } = require('./config/database');
+const authRoutes = require('./routes/auth');
+const gameRoutes = require('./routes/games');
 
 const app = express();
 const server = http.createServer(app);
@@ -26,8 +27,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Rutas de autenticación
-const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
+app.use('/api/games', gameRoutes);
 
 const io = new Server(server, {
   cors: {
