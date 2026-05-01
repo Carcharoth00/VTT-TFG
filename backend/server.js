@@ -1,10 +1,14 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
 const cors = require('cors');
 require('dotenv').config();
+const { setupSocketHandlers } = require('./sockets/handlers');
 
 const { testConnection } = require('./config/database');
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 3001;
 
 // ========== MIDDLEWARES ==========
@@ -20,6 +24,20 @@ app.use(express.json());
 
 // 3. URL Encoded - Permite recibir datos de formularios
 app.use(express.urlencoded({ extended: true }));
+
+// Rutas de autenticación
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+
+const io = new Server(server, {
+  cors: {
+    origin: 'http://localhost:4200',
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
+setupSocketHandlers(io);
 
 // ========== RUTAS ==========
 
@@ -43,9 +61,6 @@ app.get('/health', async (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
-
-const authRoutes = require('./routes/auth');
-app.use('/api/auth', authRoutes);
 
 // ========== MANEJO DE ERRORES ==========
 
@@ -80,7 +95,7 @@ const startServer = async () => {
     }
 
     // Iniciar servidor
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log('');
       console.log('═══════════════════════════════════════');
       console.log(`🚀 Servidor backend corriendo`);
