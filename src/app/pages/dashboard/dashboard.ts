@@ -26,6 +26,8 @@ export class Dashboard implements OnInit {
   newGameName = '';
   newGameDescription = '';
   joinCode = '';
+  joinError = '';
+  createError = '';
 
   constructor(
     private router: Router,
@@ -61,13 +63,15 @@ export class Dashboard implements OnInit {
 
     this.gameService.createGame(this.newGameName, this.newGameDescription).subscribe({
       next: (response) => {
-        this.games.unshift(response.game);
         this.showCreateModal = false;
         this.newGameName = '';
         this.newGameDescription = '';
+        this.createError = '';
+        this.router.navigate(['/tabletop', response.game.id]);
       },
-      error: () => {
-        this.error = 'Error al crear la partida';
+      error: (err) => {
+        this.createError = err.error?.error || 'Error al crear la partida';
+        this.cdr.detectChanges();
       }
     });
   }
@@ -77,12 +81,13 @@ export class Dashboard implements OnInit {
 
     this.gameService.joinGame(this.joinCode).subscribe({
       next: (response) => {
-        this.games.unshift(response.game);
         this.showJoinModal = false;
         this.joinCode = '';
+        this.router.navigate(['/tabletop', response.game.id]);
       },
       error: (err) => {
-        this.error = err.error?.error || 'Código de invitación inválido';
+        this.joinError = err.error?.error || 'Código de invitación inválido';
+        this.cdr.detectChanges();
       }
     });
   }
@@ -93,5 +98,15 @@ export class Dashboard implements OnInit {
 
   logout() {
     this.authService.logout();
+  }
+
+  openCreateModal() {
+    this.showCreateModal = true;
+    this.cdr.detectChanges();
+  }
+
+  openJoinModal() {
+    this.showJoinModal = true;
+    this.cdr.detectChanges();
   }
 }

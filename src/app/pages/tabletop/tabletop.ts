@@ -5,6 +5,8 @@ import { CdkDragDrop, DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop'
 import { io, Socket } from 'socket.io-client';
 import { Router } from '@angular/router';
 import { Token, GridConfig, ChatMessage, DiceRoll, RoomState } from "../../model/interfaces";
+import { ActivatedRoute } from '@angular/router';
+import { AuthService } from '../../services/auth';
 
 @Component({
   selector: 'app-tabletop',
@@ -40,13 +42,24 @@ export class Tabletop implements OnInit, OnDestroy {
 
   constructor(
     private cdr: ChangeDetectorRef,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute,
+    private authService: AuthService
   ) {
     console.log('✅ Tabletop constructor - Router inyectado:', !!this.router);
   }
 
   ngOnInit() {
-    this.initializeSocket();
+    const user = this.authService.getCurrentUser();
+    if (user) {
+      this.username = user.username;
+    }
+
+    this.route.params.subscribe(params => {
+      this.roomId = params['id'];
+      this.initializeSocket();
+      this.connectToRoom();
+    });
   }
 
   ngOnDestroy() {
@@ -57,9 +70,17 @@ export class Tabletop implements OnInit, OnDestroy {
 
   // ========== SOCKET.IO ==========
 
+  private connectToRoom() {
+    this.socket.connect();
+    this.socket.emit('join-room', {
+      roomId: this.roomId,
+      username: this.username,
+      userId: this.authService.getCurrentUser()?.id
+    });
+  }
   private initializeSocket() {
     // Conectar al servidor Socket.IO (ajusta la URL según tu backend)
-    this.socket = io('http://localhost:3000', {
+    this.socket = io('http://localhost:3001', {
       transports: ['websocket'],
       autoConnect: false,
     });
@@ -79,13 +100,14 @@ export class Tabletop implements OnInit, OnDestroy {
 
     // Recibir estado inicial de la sala
     this.socket.on('room-state', (state: RoomState) => {
-      console.log('Estado de la sala recibido:', state);
-      this.tokens = state.tokens;
-      this.gridSize = state.gridConfig.size;
-      this.gridColumns = state.gridConfig.columns;
-      this.gridRows = state.gridConfig.rows;
-      this.backgroundImage = state.backgroundImage;
-      this.zoomLevel = state.zoomLevel;
+      this.tokens = state.tokens || [];
+      if (state.gridConfig) {
+        this.gridSize = state.gridConfig.size;
+        this.gridColumns = state.gridConfig.columns;
+        this.gridRows = state.gridConfig.rows;
+      }
+      this.backgroundImage = state.backgroundImage || null;
+      this.zoomLevel = state.zoomLevel || 1;
       this.chatMessages = state.chatMessages || [];
       this.cdr.markForCheck();
     });
@@ -161,15 +183,15 @@ export class Tabletop implements OnInit, OnDestroy {
   leaveRoom() {
     console.log('🔴 leaveRoom() llamado');
     console.log('🔴 Router disponible:', !!this.router);
-    
+
     if (this.roomId) {
       this.socket.emit('leave-room', this.roomId);
       this.socket.disconnect();
       this.roomId = '';
       this.isConnected = false;
-      
+
       console.log('🔴 Intentando navegar a /dashboard...');
-      
+
       // Navegación con promesa para debug
       this.router.navigate(['/dashboard']).then(
         success => console.log('✅ Navegación exitosa:', success),
@@ -183,7 +205,7 @@ export class Tabletop implements OnInit, OnDestroy {
 
   goBack() {
     console.log('🔴 goBack() llamado');
-    
+
     // Confirmar antes de salir
     const confirmLeave = confirm('¿Seguro que quieres salir de la sala?');
     console.log('🔴 Confirmación del usuario:', confirmLeave);
@@ -191,13 +213,13 @@ export class Tabletop implements OnInit, OnDestroy {
     if (confirmLeave) {
       console.log('🔴 Usuario confirmó, llamando a leaveRoom()');
       this.leaveRoom();
-      
+
       // Limpiar datos locales
       this.tokens = [];
       this.chatMessages = [];
       this.backgroundImage = null;
       this.zoomLevel = 1;
-      
+
       console.log('🔴 Datos locales limpiados');
     } else {
       console.log('🔴 Usuario canceló la salida');

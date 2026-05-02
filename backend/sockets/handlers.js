@@ -5,6 +5,10 @@ function getOrCreateRoom(roomId) {
   if (!rooms.has(roomId)) {
     rooms.set(roomId, {
       tokens: [],
+      gridConfig: { size: 50, columns: 20, rows: 15 },
+      backgroundImage: null,
+      zoomLevel: 1,
+      chatMessages: [],
       users: new Map() // socketId -> { username, userId }
     });
   }
@@ -23,7 +27,13 @@ function setupSocketHandlers(io) {
       room.users.set(socket.id, { username, userId });
 
       // Enviar el estado actual solo al que se acaba de unir
-      socket.emit('room-state', { tokens: room.tokens });
+      socket.emit('room-state', {
+        tokens: room.tokens,
+        gridConfig: room.gridConfig,
+        backgroundImage: room.backgroundImage,
+        zoomLevel: room.zoomLevel,
+        chatMessages: room.chatMessages
+      });
 
       // Notificar a los demás que alguien entró
       socket.to(roomId).emit('system-message', {

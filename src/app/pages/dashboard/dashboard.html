@@ -10,8 +10,8 @@
   <main class="dashboard-main">
 
     <section class="actions">
-      <button (click)="showCreateModal = true">+ Nueva partida</button>
-      <button (click)="showJoinModal = true">Unirse con código</button>
+      <button (click)="openCreateModal()">+ Nueva partida</button>
+      <button (click)="showJoinModal = !showJoinModal">Unirse con código ({{ showJoinModal }})</button>
     </section>
 
     <section class="games-list">
@@ -25,7 +25,8 @@
         <div class="game-info">
           <h3>{{ game.name }}</h3>
           <p>{{ game.description }}</p>
-          <small>{{ game.role_in_game === 'gm' ? 'Director de juego' : 'Jugador' }} · {{ game.member_count }} miembros</small>
+          <small>{{ game.role_in_game === 'gm' ? 'Director de juego' : 'Jugador' }} · {{ game.member_count }}
+            miembros</small>
           <small *ngIf="game.role_in_game === 'gm'">Código: {{ game.invite_code }}</small>
         </div>
         <button (click)="enterGame(game)">Entrar</button>
@@ -33,29 +34,30 @@
     </section>
 
   </main>
-</div>
-
-<!-- Modal crear partida -->
-<div class="modal-overlay" *ngIf="showCreateModal">
-  <div class="modal">
-    <h2>Nueva partida</h2>
-    <input [(ngModel)]="newGameName" placeholder="Nombre de la partida" />
-    <input [(ngModel)]="newGameDescription" placeholder="Descripción (opcional)" />
-    <div class="modal-actions">
-      <button (click)="createGame()">Crear</button>
-      <button (click)="showCreateModal = false">Cancelar</button>
+  <!-- Modal crear partida -->
+  <div class="modal-overlay" *ngIf="showCreateModal">
+    <div class="modal">
+      <h2>Nueva partida</h2>
+      <p class="modal-error" *ngIf="createError">{{ createError }}</p>
+      <input [(ngModel)]="newGameName" placeholder="Nombre de la partida" />
+      <input [(ngModel)]="newGameDescription" placeholder="Descripción (opcional)" />
+      <div class="modal-actions">
+        <button (click)="createGame()">Crear</button>
+        <button (click)="showCreateModal = false; createError = ''">Cancelar</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Modal unirse -->
-<div class="modal-overlay" *ngIf="showJoinModal">
-  <div class="modal">
-    <h2>Unirse a partida</h2>
-    <input [(ngModel)]="joinCode" placeholder="Código de invitación" />
-    <div class="modal-actions">
-      <button (click)="joinGame()">Unirse</button>
-      <button (click)="showJoinModal = false">Cancelar</button>
+  <!-- Modal unirse -->
+  <div class="modal-overlay" *ngIf="showJoinModal">
+    <div class="modal">
+      <h2>Unirse a partida</h2>
+      <p class="modal-error" *ngIf="joinError">{{ joinError }}</p>
+      <input [(ngModel)]="joinCode" placeholder="Código de invitación" />
+      <div class="modal-actions">
+        <button (click)="joinGame()">Unirse</button>
+        <button (click)="showJoinModal = false; joinError = ''">Cancelar</button>
+      </div>
     </div>
   </div>
 </div>
