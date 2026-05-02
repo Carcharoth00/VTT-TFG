@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth';
+import { environment } from '../../environments/environment';
 
 export interface Game {
   id: number;
@@ -20,7 +21,7 @@ export interface Game {
 })
 export class GameService {
 
-  private apiUrl = 'http://localhost:3001/api/games';
+  private apiUrl = `${environment.apiUrl}/games`;
 
   constructor(
     private http: HttpClient,

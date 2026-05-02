@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { Router } from '@angular/router';
+import { environment } from '../../environments/environment';
 
 // Interfaces
 interface User {
@@ -42,7 +43,7 @@ export class AuthService {
   private isBrowser: boolean;
 
   // URL del backend
-  private apiUrl = 'http://localhost:3001/api/auth';
+  private apiUrl = `${environment.apiUrl}/auth`;
 
   // Estado del usuario actual (Observable para que otros componentes puedan suscribirse)
   private currentUserSubject = new BehaviorSubject<User | null>(null);

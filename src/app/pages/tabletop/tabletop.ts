@@ -7,6 +7,7 @@ import { Router } from '@angular/router';
 import { Token, GridConfig, ChatMessage, DiceRoll, RoomState } from "../../model/interfaces";
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-tabletop',
@@ -80,7 +81,7 @@ export class Tabletop implements OnInit, OnDestroy {
   }
   private initializeSocket() {
     // Conectar al servidor Socket.IO (ajusta la URL según tu backend)
-    this.socket = io('http://localhost:3001', {
+    this.socket = io(environment.socketUrl, {
       transports: ['websocket'],
       autoConnect: false,
     });
