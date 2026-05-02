@@ -7,31 +7,9 @@
 
     <!-- Conexión Socket.IO -->
     <div class="control-section connection-section">
-      <h3>Conexión Multiplayer</h3>
       <div class="connection-status" [class.connected]="isConnected">
         <span class="status-indicator"></span>
-        {{ isConnected ? 'Conectado' : 'Desconectado' }}
-      </div>
-
-      <div *ngIf="!isConnected">
-        <label>
-          Nombre de Usuario:
-          <input type="text" [(ngModel)]="username" placeholder="Tu nombre" (keyup.enter)="joinRoom()" maxlength="20">
-        </label>
-        <label>
-          ID de Sala:
-          <input type="text" [(ngModel)]="roomId" placeholder="Ej: room123" (keyup.enter)="joinRoom()">
-        </label>
-        <button (click)="joinRoom()" class="btn-connect" [disabled]="!roomId.trim() || !username.trim()">
-          Unirse a Sala
-        </button>
-      </div>
-
-      <div *ngIf="isConnected">
-        <p class="room-info">Sala: <strong>{{ roomId }}</strong></p>
-        <button (click)="leaveRoom()" class="btn-disconnect">
-          Salir de la Sala
-        </button>
+        {{ isConnected ? 'Conectado — Sala ' + roomId : 'Conectando...' }}
       </div>
     </div>
 
@@ -111,7 +89,7 @@
       </button>
     </div>
   </aside>
-  
+
   <!-- Área del tablero -->
   <main #tabletopMain class="tabletop-main">
     <div #gridWrapper class="grid-wrapper" [style.width.px]="gridColumns * gridSize * zoomLevel"
