@@ -1,29 +1,61 @@
 <div class="dashboard-container">
   <header class="dashboard-header">
-    <div class="header-content">
-      <h1>Panel de Control - VTT Nexus</h1>
-      <p>Bienvenido, </p> <!-- {{ currentUser?.name }} -->
+    <h1>VTT Nexus</h1>
+    <div class="header-right">
+      <span>{{ currentUser?.username }}</span>
+      <button (click)="logout()">Cerrar sesión</button>
     </div>
-    <button class="logout-btn">Cerrar Sesión</button> <!-- (click)="logout()" -->
   </header>
 
   <main class="dashboard-main">
-    <section class="welcome-section">
-      <h2>Tu Cuenta</h2>
-      <div class="user-info">
-        <p><strong>Email:</strong></p>  <!-- {{ currentUser?.email }} -->
-        <p><strong>Rol:</strong> </p><!--  {{ currentUser?.role === 'DUNGEON_MASTER' ? 'Director de Juego' : 'Jugador' }} -->
-        <p><strong>ID:</strong> </p> <!-- {{ currentUser?.id }} -->
+
+    <section class="actions">
+      <button (click)="showCreateModal = true">+ Nueva partida</button>
+      <button (click)="showJoinModal = true">Unirse con código</button>
+    </section>
+
+    <section class="games-list">
+      <h2>Mis partidas</h2>
+
+      <p *ngIf="loading">Cargando...</p>
+      <p *ngIf="error">{{ error }}</p>
+      <p *ngIf="!loading && games.length === 0">No tienes partidas todavía.</p>
+
+      <div class="game-card" *ngFor="let game of games">
+        <div class="game-info">
+          <h3>{{ game.name }}</h3>
+          <p>{{ game.description }}</p>
+          <small>{{ game.role_in_game === 'gm' ? 'Director de juego' : 'Jugador' }} · {{ game.member_count }} miembros</small>
+          <small *ngIf="game.role_in_game === 'gm'">Código: {{ game.invite_code }}</small>
+        </div>
+        <button (click)="enterGame(game)">Entrar</button>
       </div>
     </section>
 
-    <section class="placeholder-section">
-      <h2>Próximas Funcionalidades</h2>
-      <ul>
-        <li>🎮 Crear y gestionar partidas</li>
-        <li>👥 Unirse a partidas existentes</li>
-        <li (click)="goToTabletop()">🗺️ Tablero interactivo</li>
-      </ul>
-    </section>
   </main>
+</div>
+
+<!-- Modal crear partida -->
+<div class="modal-overlay" *ngIf="showCreateModal">
+  <div class="modal">
+    <h2>Nueva partida</h2>
+    <input [(ngModel)]="newGameName" placeholder="Nombre de la partida" />
+    <input [(ngModel)]="newGameDescription" placeholder="Descripción (opcional)" />
+    <div class="modal-actions">
+      <button (click)="createGame()">Crear</button>
+      <button (click)="showCreateModal = false">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal unirse -->
+<div class="modal-overlay" *ngIf="showJoinModal">
+  <div class="modal">
+    <h2>Unirse a partida</h2>
+    <input [(ngModel)]="joinCode" placeholder="Código de invitación" />
+    <div class="modal-actions">
+      <button (click)="joinGame()">Unirse</button>
+      <button (click)="showJoinModal = false">Cancelar</button>
+    </div>
+  </div>
 </div>

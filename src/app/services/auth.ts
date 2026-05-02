@@ -168,7 +168,7 @@ export class AuthService {
 
   // Verificar si el usuario está autenticado (forma síncrona)
   public isLoggedIn(): boolean {
-    return this.isAuthenticatedSubject.value;
+     return this.getToken() !== null;
   }
 
   // Obtener el usuario actual (forma síncrona)

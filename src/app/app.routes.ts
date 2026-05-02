@@ -3,6 +3,7 @@ import { LoginComponent } from './pages/login/login';
 import { RegisterComponent } from './pages/registro/registro';
 import { Dashboard } from './pages/dashboard/dashboard';
 import { Tabletop } from './pages/tabletop/tabletop';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -20,10 +21,12 @@ export const routes: Routes = [
   },
   {
     path: 'dashboard',
-    component: Dashboard
+    component: Dashboard,
+    canActivate: [authGuard]
   },
   {
-    path: 'tabletop',
-    component: Tabletop
+    path: 'tabletop/:id',
+    component: Tabletop,
+    canActivate: [authGuard]
   }
 ];
