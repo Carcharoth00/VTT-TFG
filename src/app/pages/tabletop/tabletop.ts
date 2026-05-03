@@ -51,15 +51,15 @@ export class Tabletop implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    const user = this.authService.getCurrentUser();
-    if (user) {
-      this.username = user.username;
-    }
-
-    this.route.params.subscribe(params => {
-      this.roomId = params['id'];
-      this.initializeSocket();
-      this.connectToRoom();
+    this.authService.currentUser$.subscribe(user => {
+      if (user && !this.isConnected) {
+        this.username = user.username;
+        this.route.params.subscribe(params => {
+          this.roomId = params['id'];
+          this.initializeSocket();
+          this.connectToRoom();
+        });
+      }
     });
   }
 
@@ -309,19 +309,16 @@ export class Tabletop implements OnInit, OnDestroy {
   // ========== TOKENS (CDK Drag & Drop) ==========
 
   addToken() {
-    const token: Token = {
-      id: this.nextTokenId++,
+    if (!this.isConnected) return;
+
+    const token = {
       x: 0,
       y: 0,
       color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
-      label: `T${this.nextTokenId - 1}`,
+      label: `T${Date.now() % 1000}`,
     };
 
-    this.tokens.push(token);
-
-    if (this.isConnected) {
-      this.socket.emit('add-token', { roomId: this.roomId, token });
-    }
+    this.socket.emit('add-token', { roomId: this.roomId, token });
   }
 
   removeToken(id: number) {
