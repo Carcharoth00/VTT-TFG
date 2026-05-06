@@ -88,6 +88,12 @@
         🚪 Salir del Tablero
       </button>
     </div>
+
+    <div class="control-section">
+      <button (click)="isCharactersPanelOpen = !isCharactersPanelOpen" class="btn-characters">
+        📋 {{ isCharactersPanelOpen ? 'Cerrar fichas' : 'Ver fichas' }}
+      </button>
+    </div>
   </aside>
 
   <!-- Área del tablero -->
@@ -115,6 +121,11 @@
   </main>
 
   <!-- Panel de Chat -->
+  <aside class="characters-aside" [class.closed]="!isCharactersPanelOpen">
+    <app-characters *ngIf="isCharactersPanelOpen" [gameId]="roomId ? +roomId : 0" | number
+      [currentUserId]="authService.getCurrentUser()?.id || 0">
+    </app-characters>
+  </aside>
   <aside class="chat-panel" [class.closed]="!isChatOpen">
     <div class="chat-header">
       <h3>💬 Chat</h3>

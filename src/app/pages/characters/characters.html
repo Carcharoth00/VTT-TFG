@@ -1,0 +1,83 @@
+<div class="characters-panel">
+
+  <div class="characters-header">
+    <h3>Fichas de personaje</h3>
+    <button (click)="openCreateForm()" class="btn-add">+ Nueva ficha</button>
+  </div>
+
+  <p class="error-msg" *ngIf="error">{{ error }}</p>
+
+  <!-- Lista de fichas -->
+  <div class="characters-list" *ngIf="!showCreateForm">
+
+    <p *ngIf="characters.length === 0" class="empty-msg">No hay fichas en esta partida.</p>
+
+    <div class="character-card" *ngFor="let char of characters">
+      <div class="character-header">
+        <h4>{{ char.name }}</h4>
+        <div class="character-actions" *ngIf="isOwner(char)">
+          <button (click)="openEditForm(char)" class="btn-edit">✏️</button>
+          <button (click)="deleteCharacter(char)" class="btn-delete">🗑️</button>
+        </div>
+      </div>
+
+      <div class="character-stats-bar">
+        <span class="stat-badge hp">❤️ {{ char.hp }}/{{ char.max_hp }}</span>
+        <span class="stat-badge ac">🛡️ CA {{ char.ac }}</span>
+      </div>
+
+      <div class="character-stats" *ngIf="char.stats">
+        <div class="stat" *ngFor="let stat of ['fuerza','destreza','constitucion','inteligencia','sabiduria','carisma']">
+          <span class="stat-name">{{ stat.slice(0,3).toUpperCase() }}</span>
+          <span class="stat-value">{{ getStatValue(char.stats, stat) }}</span>
+        </div>
+      </div>
+
+      <p class="character-notes" *ngIf="char.notes">{{ char.notes }}</p>
+    </div>
+  </div>
+
+  <!-- Formulario crear/editar -->
+  <div class="character-form" *ngIf="showCreateForm">
+    <h4>{{ editingCharacter ? 'Editar ficha' : 'Nueva ficha' }}</h4>
+
+    <div class="form-group">
+      <label>Nombre</label>
+      <input [(ngModel)]="form.name" placeholder="Nombre del personaje" />
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>HP actual</label>
+        <input type="number" [(ngModel)]="form.hp" min="0" />
+      </div>
+      <div class="form-group">
+        <label>HP máximo</label>
+        <input type="number" [(ngModel)]="form.max_hp" min="1" />
+      </div>
+      <div class="form-group">
+        <label>Clase de armadura</label>
+        <input type="number" [(ngModel)]="form.ac" min="1" />
+      </div>
+    </div>
+
+    <h5>Atributos</h5>
+    <div class="stats-grid">
+      <div class="form-group" *ngFor="let stat of ['fuerza','destreza','constitucion','inteligencia','sabiduria','carisma']">
+        <label>{{ stat }}</label>
+        <input type="number" [(ngModel)]="form.stats[stat]" min="1" max="20" />
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Notas</label>
+      <textarea [(ngModel)]="form.notes" placeholder="Trasfondo, equipamiento..."></textarea>
+    </div>
+
+    <div class="form-actions">
+      <button (click)="saveCharacter()" class="btn-save">Guardar</button>
+      <button (click)="showCreateForm = false" class="btn-cancel">Cancelar</button>
+    </div>
+  </div>
+
+</div>

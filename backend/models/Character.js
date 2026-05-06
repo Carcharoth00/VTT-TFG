@@ -56,15 +56,24 @@ class Character {
 
   // Actualizar ficha
   static async update(id, data) {
-    const { name, hp, max_hp, ac, stats, skills, notes } = data;
+  const { name, hp, max_hp, ac, stats, skills, notes } = data;
 
-    await pool.execute(
-      'UPDATE characters SET name = ?, hp = ?, max_hp = ?, ac = ?, stats = ?, skills = ?, notes = ? WHERE id = ?',
-      [name, hp, max_hp, ac, JSON.stringify(stats), JSON.stringify(skills), notes, id]
-    );
+  await pool.execute(
+    'UPDATE characters SET name = ?, hp = ?, max_hp = ?, ac = ?, stats = ?, skills = ?, notes = ? WHERE id = ?',
+    [
+      name ?? null,
+      hp ?? null,
+      max_hp ?? null,
+      ac ?? null,
+      stats ? JSON.stringify(stats) : null,
+      skills ? JSON.stringify(skills) : null,
+      notes ?? null,
+      id
+    ]
+  );
 
-    return this.findById(id);
-  }
+  return this.findById(id);
+}
 
   // Eliminar ficha
   static async delete(id, userId) {

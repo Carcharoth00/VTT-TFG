@@ -8,11 +8,12 @@ import { Token, GridConfig, ChatMessage, DiceRoll, RoomState } from "../../model
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { environment } from '../../../environments/environment';
+import { CharactersComponent } from '../characters/characters';
 
 @Component({
   selector: 'app-tabletop',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule],
+  imports: [CommonModule, FormsModule, DragDropModule, CharactersComponent],
   templateUrl: './tabletop.html',
   styleUrl: './tabletop.css',
 })
@@ -40,12 +41,13 @@ export class Tabletop implements OnInit, OnDestroy {
   chatMessages: ChatMessage[] = [];
   newMessage: string = '';
   isChatOpen = true;
+  isCharactersPanelOpen = false;
 
   constructor(
     private cdr: ChangeDetectorRef,
     private router: Router,
     private route: ActivatedRoute,
-    private authService: AuthService
+    public authService: AuthService
   ) {
     console.log('✅ Tabletop constructor - Router inyectado:', !!this.router);
   }
