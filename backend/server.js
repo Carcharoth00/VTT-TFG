@@ -7,6 +7,7 @@ const { setupSocketHandlers } = require('./sockets/handlers');
 const { testConnection } = require('./config/database');
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/games');
+const characterRoutes = require('./routes/characters');
 
 const app = express();
 const server = http.createServer(app);
@@ -29,6 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 // Rutas de autenticación
 app.use('/api/auth', authRoutes);
 app.use('/api/games', gameRoutes);
+app.use('/api/characters', characterRoutes);
 
 const io = new Server(server, {
   cors: {
