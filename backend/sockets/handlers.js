@@ -16,6 +16,13 @@ function getOrCreateRoom(roomId) {
   return rooms.get(roomId);
 }
 
+function getRoomUsers(room) {
+  return Array.from(room.users.values()).map(u => ({
+    username: u.username,
+    userId: u.userId
+  }));
+}
+
 function setupSocketHandlers(io) {
 
   io.on('connection', (socket) => {
@@ -51,8 +58,7 @@ function setupSocketHandlers(io) {
       socket.to(roomId).emit('system-message', {
         message: `${username} se ha unido a la sala`
       });
-
-      console.log(`${username} se unió a sala ${roomId}`);
+      io.to(roomId).emit('users-updated', getRoomUsers(room));
     });
 
     // Mover un token
@@ -130,6 +136,8 @@ function setupSocketHandlers(io) {
           });
           if (room.users.size === 0) {
             rooms.delete(roomId);
+          } else {
+            io.to(roomId).emit('users-updated', getRoomUsers(room));
           }
         }
       }

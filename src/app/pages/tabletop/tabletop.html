@@ -71,6 +71,15 @@
     </div>
 
     <!-- Info -->
+    <div class="control-section">
+      <h3>Jugadores conectados ({{ connectedUsers.length }})</h3>
+      <div class="connected-users">
+        <div class="connected-user" *ngFor="let user of connectedUsers">
+          <span class="user-indicator"></span>
+          <span>{{ user.username }}</span>
+        </div>
+      </div>
+    </div>
     <div class="control-section info-section">
       <h3>ℹ️ Instrucciones</h3>
       <ul class="instructions">

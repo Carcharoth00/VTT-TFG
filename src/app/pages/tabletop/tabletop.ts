@@ -19,6 +19,7 @@ import { CharactersComponent } from '../characters/characters';
 })
 export class Tabletop implements OnInit, OnDestroy {
   @ViewChild('gridWrapper') gridWrapper!: ElementRef;
+  connectedUsers: { username: string, userId: number }[] = [];
 
   // Grid configuration
   gridSize = 50;
@@ -173,6 +174,11 @@ export class Tabletop implements OnInit, OnDestroy {
       this.chatMessages.push(message);
       this.cdr.markForCheck();
       this.scrollChatToBottom();
+    });
+
+    this.socket.on('users-updated', (users: { username: string, userId: number }[]) => {
+      this.connectedUsers = users;
+      this.cdr.markForCheck();
     });
   }
 
