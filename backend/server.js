@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/games');
 const characterRoutes = require('./routes/characters');
 const mapRoutes = require('./routes/maps');
+const { initDatabase } = require('./config/initDatabase');
 
 const app = express();
 const server = http.createServer(app);
@@ -50,7 +51,7 @@ setupSocketHandlers(io);
 
 // Ruta de prueba
 app.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: '🚀 Backend VTT funcionando correctamente',
     version: '1.0.0',
     endpoints: {
@@ -73,16 +74,16 @@ app.get('/health', async (req, res) => {
 
 // Si ninguna ruta coincide, devolver 404
 app.use((req, res) => {
-  res.status(404).json({ 
+  res.status(404).json({
     error: 'Ruta no encontrada',
-    path: req.path 
+    path: req.path
   });
 });
 
 // Manejo global de errores
 app.use((err, req, res, next) => {
   console.error('❌ Error:', err.stack);
-  res.status(500).json({ 
+  res.status(500).json({
     error: 'Error interno del servidor',
     message: process.env.NODE_ENV === 'development' ? err.message : undefined
   });
@@ -94,12 +95,21 @@ const startServer = async () => {
   try {
     // Verificar conexión a base de datos
     const dbConnected = await testConnection();
-    
+
     if (!dbConnected) {
       console.error('❌ No se pudo conectar a la base de datos');
       console.log('💡 Verifica que XAMPP MySQL esté corriendo');
       process.exit(1);
     }
+
+    // Inicializar base de datos (crear tablas si no existen)
+    const dbConnected = await testConnection();
+    if (!dbConnected) {
+      console.error('No se pudo conectar a la base de datos');
+      process.exit(1);
+    }
+
+    await initDatabase();
 
     // Iniciar servidor
     server.listen(PORT, () => {
