@@ -81,7 +81,9 @@ function setupSocketHandlers(io) {
 
     // Añadir un token
     socket.on('add-token', async ({ roomId, token }) => {
+      console.log('add-token recibido:', roomId, token);
       const room = rooms.get(roomId);
+      console.log('room encontrada:', !!room);
       if (room) {
         try {
           const savedToken = await Token.create({

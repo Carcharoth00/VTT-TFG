@@ -8,6 +8,7 @@ const { testConnection } = require('./config/database');
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/games');
 const characterRoutes = require('./routes/characters');
+const mapRoutes = require('./routes/maps');
 
 const app = express();
 const server = http.createServer(app);
@@ -22,15 +23,18 @@ app.use(cors({
 }));
 
 // 2. JSON - Permite recibir datos en formato JSON
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
 // 3. URL Encoded - Permite recibir datos de formularios
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Rutas de autenticación
 app.use('/api/auth', authRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/characters', characterRoutes);
+app.use('/api/maps', mapRoutes);
+
+// ========== SOCKET.IO ==========
 
 const io = new Server(server, {
   cors: {

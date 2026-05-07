@@ -9,6 +9,7 @@ import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../services/auth';
 import { environment } from '../../../environments/environment';
 import { CharactersComponent } from '../characters/characters';
+import { MapService, GameMap } from '../../services/map.service';
 
 @Component({
   selector: 'app-tabletop',
@@ -44,11 +45,16 @@ export class Tabletop implements OnInit, OnDestroy {
   isChatOpen = true;
   isCharactersPanelOpen = false;
 
+  //Map
+  maps: GameMap[] = [];
+  activeMapId: number | null = null;
+
   constructor(
     private cdr: ChangeDetectorRef,
     private router: Router,
     private route: ActivatedRoute,
-    public authService: AuthService
+    public authService: AuthService,
+    private mapService: MapService
   ) {
     console.log('✅ Tabletop constructor - Router inyectado:', !!this.router);
   }
@@ -61,6 +67,19 @@ export class Tabletop implements OnInit, OnDestroy {
           this.roomId = params['id'];
           this.initializeSocket();
           this.connectToRoom();
+          this.mapService.getActiveMap(+this.roomId).subscribe({
+            next: (response) => {
+              if (response.map) {
+                this.activeMapId = response.map.id;
+                this.mapService.getMapImage(response.map.id).subscribe({
+                  next: (img) => {
+                    this.backgroundImage = img.image;
+                    this.cdr.detectChanges();
+                  }
+                });
+              }
+            }
+          });
         });
       }
     });
@@ -147,9 +166,18 @@ export class Tabletop implements OnInit, OnDestroy {
       this.cdr.markForCheck();
     });
 
-    this.socket.on('background-updated', (imageData: string | null) => {
-      this.backgroundImage = imageData;
-      this.cdr.markForCheck();
+    this.socket.on('background-updated', (data: { mapId: number } | null) => {
+      if (data && data.mapId) {
+        this.mapService.getMapImage(data.mapId).subscribe({
+          next: (response) => {
+            this.backgroundImage = response.image;
+            this.cdr.detectChanges();
+          }
+        });
+      } else {
+        this.backgroundImage = null;
+        this.cdr.detectChanges();
+      }
     });
 
     this.socket.on('zoom-updated', (zoom: number) => {
@@ -286,22 +314,47 @@ export class Tabletop implements OnInit, OnDestroy {
 
   onImageUpload(event: any) {
     const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.backgroundImage = e.target.result;
+    if (!file) return;
 
-        if (this.isConnected) {
-          this.socket.emit('update-background', {
-            roomId: this.roomId,
-            image: this.backgroundImage,
-          });
-        }
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      const imageData = e.target.result;
+      const mapName = file.name.replace(/\.[^/.]+$/, '');
 
-        this.cdr.markForCheck();
-      };
-      reader.readAsDataURL(file);
-    }
+      this.mapService.uploadMap(
+        +this.roomId,
+        mapName,
+        imageData,
+        { cols: this.gridColumns, rows: this.gridRows, size: this.gridSize }
+      ).subscribe({
+        next: (response) => {
+          this.maps.push(response.map);
+          this.activateMap(response.map.id);
+        },
+        error: () => console.error('Error subiendo mapa')
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  activateMap(mapId: number) {
+    this.mapService.activateMap(mapId, +this.roomId).subscribe({
+      next: () => {
+        this.activeMapId = mapId;
+        this.mapService.getMapImage(mapId).subscribe({
+          next: (response) => {
+            this.backgroundImage = response.image;
+            this.cdr.detectChanges();
+            if (this.isConnected) {
+              this.socket.emit('update-background', {
+                roomId: this.roomId,
+                mapId: mapId
+              });
+            }
+          }
+        });
+      }
+    });
   }
 
   removeBackground() {
@@ -317,6 +370,7 @@ export class Tabletop implements OnInit, OnDestroy {
   // ========== TOKENS (CDK Drag & Drop) ==========
 
   addToken() {
+    console.log('addToken llamado, isConnected:', this.isConnected, 'roomId:', this.roomId);
     if (!this.isConnected) return;
 
     const token = {
