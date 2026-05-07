@@ -32,3 +32,10 @@ module.exports = {
   pool: promisePool,
   testConnection
 };
+
+console.log('DB Config:', {
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT
+});
