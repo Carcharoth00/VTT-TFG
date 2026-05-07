@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-//require('dotenv').config();
+require('dotenv').config();
 const { setupSocketHandlers } = require('./sockets/handlers');
 const { testConnection } = require('./config/database');
 const authRoutes = require('./routes/auth');
