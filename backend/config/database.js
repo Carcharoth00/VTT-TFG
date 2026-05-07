@@ -18,6 +18,12 @@ const promisePool = pool.promise();
 
 // Función para verificar la conexión
 const testConnection = async () => {
+   console.log('DB Config:', {
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    database: process.env.DB_NAME,
+    port: process.env.DB_PORT
+  });
   try {
     const [rows] = await promisePool.query('SELECT 1');
     console.log('✅ Conectado a MySQL correctamente');
@@ -32,10 +38,3 @@ module.exports = {
   pool: promisePool,
   testConnection
 };
-
-console.log('DB Config:', {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT
-});
