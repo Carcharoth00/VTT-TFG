@@ -93,37 +93,22 @@ app.use((err, req, res, next) => {
 
 const startServer = async () => {
   try {
-    // Verificar conexión a base de datos
     const dbConnected = await testConnection();
 
-    if (!dbConnected) {
-      console.error('❌ No se pudo conectar a la base de datos');
-      console.log('💡 Verifica que XAMPP MySQL esté corriendo');
-      process.exit(1);
-    }
-
-    // Inicializar base de datos (crear tablas si no existen)
-    const dbConnected = await testConnection();
     if (!dbConnected) {
       console.error('No se pudo conectar a la base de datos');
+      console.log('Verifica que MySQL esté corriendo');
       process.exit(1);
     }
 
     await initDatabase();
 
-    // Iniciar servidor
     server.listen(PORT, () => {
-      console.log('');
-      console.log('═══════════════════════════════════════');
-      console.log(`🚀 Servidor backend corriendo`);
-      console.log(`📍 URL: http://localhost:${PORT}`);
-      console.log(`🗄️  Base de datos: Conectada`);
-      console.log(`🌍 Entorno: ${process.env.NODE_ENV}`);
-      console.log('═══════════════════════════════════════');
-      console.log('');
+      console.log(`Servidor corriendo en puerto ${PORT}`);
+      console.log(`Entorno: ${process.env.NODE_ENV}`);
     });
   } catch (error) {
-    console.error('❌ Error al iniciar servidor:', error);
+    console.error('Error al iniciar servidor:', error);
     process.exit(1);
   }
 };
