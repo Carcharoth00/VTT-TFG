@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 3001;
 
 // 1. CORS - Permite que Angular (localhost:4200) hable con el backend (localhost:3001)
 app.use(cors({
-  origin: 'http://localhost:4200', // URL de tu Angular
+  origin: process.env.CORS_ORIGIN || 'http://localhost:4200',
   credentials: true
 }));
 
