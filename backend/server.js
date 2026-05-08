@@ -39,8 +39,7 @@ app.use('/api/maps', mapRoutes);
 
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:4200',
-    methods: ['GET', 'POST'],
+    origin: process.env.CORS_ORIGIN || 'http://localhost:4200',
     credentials: true
   }
 });
