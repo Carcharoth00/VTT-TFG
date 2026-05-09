@@ -27,7 +27,7 @@ export class RegisterComponent {
   constructor(
     private authService: AuthService,
     private router: Router
-  ) {}
+  ) { }
 
   // ========== SUBMIT DEL FORMULARIO ==========
   onSubmit(): void {
@@ -69,15 +69,15 @@ export class RegisterComponent {
     }).subscribe({
       next: (response) => {
         console.log('Registro exitoso:', response);
-        // Redirigir al dashboard
         this.router.navigate(['/dashboard']);
       },
       error: (error) => {
         console.error('Error en registro:', error);
         this.isLoading = false;
-        
-        // Mostrar mensaje de error
-        if (error.error?.message) {
+
+        if (error.status === 409) {
+          this.errorMessage = 'El email o nombre de usuario ya está en uso';
+        } else if (error.error?.message) {
           this.errorMessage = error.error.message;
         } else {
           this.errorMessage = 'Error al registrarse. Intenta de nuevo.';
