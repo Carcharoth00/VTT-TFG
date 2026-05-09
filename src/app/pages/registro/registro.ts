@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef  } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -26,7 +26,8 @@ export class RegisterComponent {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) { }
 
   // ========== SUBMIT DEL FORMULARIO ==========
@@ -82,6 +83,7 @@ export class RegisterComponent {
         } else {
           this.errorMessage = 'Error al registrarse. Intenta de nuevo.';
         }
+        this.cdr.detectChanges();
       },
       complete: () => {
         this.isLoading = false;
