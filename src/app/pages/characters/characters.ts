@@ -27,6 +27,7 @@ export class CharactersComponent implements OnInit {
     max_hp: number;
     ac: number;
     notes: string;
+    avatar: string | null;
     stats: CharacterStats;
   } = {
       name: '',
@@ -34,6 +35,7 @@ export class CharactersComponent implements OnInit {
       max_hp: 10,
       ac: 10,
       notes: '',
+      avatar: null,
       stats: {
         fuerza: 10,
         destreza: 10,
@@ -81,6 +83,7 @@ export class CharactersComponent implements OnInit {
       max_hp: character.max_hp,
       ac: character.ac,
       notes: character.notes || '',
+      avatar: character.avatar || null,
       stats: character.stats || {
         fuerza: 10, destreza: 10, constitucion: 10,
         inteligencia: 10, sabiduria: 10, carisma: 10
@@ -148,6 +151,7 @@ export class CharactersComponent implements OnInit {
       max_hp: 10,
       ac: 10,
       notes: '',
+      avatar: null,
       stats: {
         fuerza: 10, destreza: 10, constitucion: 10,
         inteligencia: 10, sabiduria: 10, carisma: 10
@@ -156,5 +160,22 @@ export class CharactersComponent implements OnInit {
   }
   getStatValue(stats: any, stat: string): number {
     return stats ? stats[stat] : 0;
+  }
+
+  onAvatarUpload(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.form.avatar = e.target.result;
+      this.cdr.detectChanges();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeAvatar() {
+    this.form.avatar = null;
+    this.cdr.detectChanges();
   }
 }

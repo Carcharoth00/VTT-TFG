@@ -14,7 +14,11 @@
 
     <div class="character-card" *ngFor="let char of characters">
       <div class="character-header">
-        <h4>{{ char.name }}</h4>
+        <div class="character-name-row">
+          <img *ngIf="char.avatar" [src]="char.avatar" class="character-avatar" alt="avatar"/>
+          <div *ngIf="!char.avatar" class="character-avatar-placeholder">{{ char.name.charAt(0) }}</div>
+          <h4>{{ char.name }}</h4>
+        </div>
         <div class="character-actions" *ngIf="isOwner(char)">
           <button (click)="openEditForm(char)" class="btn-edit">✏️</button>
           <button (click)="deleteCharacter(char)" class="btn-delete">🗑️</button>
@@ -44,6 +48,24 @@
     <div class="form-group">
       <label>Nombre</label>
       <input [(ngModel)]="form.name" placeholder="Nombre del personaje" />
+    </div>
+
+    <!-- Avatar -->
+    <div class="form-group">
+      <label>Imagen del personaje</label>
+      <div class="avatar-upload">
+        <img *ngIf="form.avatar" [src]="form.avatar" class="avatar-preview" alt="Avatar"/>
+        <div *ngIf="!form.avatar" class="avatar-placeholder">Sin imagen</div>
+        <div class="avatar-buttons">
+          <input type="file" accept="image/*" (change)="onAvatarUpload($event)" #avatarInput style="display:none">
+          <button type="button" (click)="avatarInput.click()" class="btn-upload-avatar">
+            {{ form.avatar ? 'Cambiar' : 'Subir imagen' }}
+          </button>
+          <button type="button" *ngIf="form.avatar" (click)="removeAvatar()" class="btn-remove-avatar">
+            Eliminar
+          </button>
+        </div>
+      </div>
     </div>
 
     <div class="form-row">

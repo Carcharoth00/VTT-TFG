@@ -25,6 +25,7 @@ export interface Character {
   stats: CharacterStats | null;
   skills: any | null;
   notes: string | null;
+  avatar: string | null;
   created_at: string;
 }
 
