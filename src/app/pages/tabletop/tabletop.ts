@@ -10,6 +10,7 @@ import { AuthService } from '../../services/auth';
 import { environment } from '../../../environments/environment';
 import { CharactersComponent } from '../characters/characters';
 import { MapService, GameMap } from '../../services/map.service';
+import { GameService, Game } from '../../services/game.service';
 
 @Component({
   selector: 'app-tabletop',
@@ -21,6 +22,7 @@ import { MapService, GameMap } from '../../services/map.service';
 export class Tabletop implements OnInit, OnDestroy {
   @ViewChild('gridWrapper') gridWrapper!: ElementRef;
   connectedUsers: { username: string, userId: number }[] = [];
+  currentGame: Game | null = null;
 
   // Grid configuration
   gridSize = 50;
@@ -54,7 +56,8 @@ export class Tabletop implements OnInit, OnDestroy {
     private router: Router,
     private route: ActivatedRoute,
     public authService: AuthService,
-    private mapService: MapService
+    private mapService: MapService,
+    private gameService: GameService
   ) {
     console.log('✅ Tabletop constructor - Router inyectado:', !!this.router);
   }
@@ -65,6 +68,12 @@ export class Tabletop implements OnInit, OnDestroy {
         this.username = user.username;
         this.route.params.subscribe(params => {
           this.roomId = params['id'];
+          this.gameService.getGame(+this.roomId).subscribe({
+            next: (response) => {
+              this.currentGame = response.game;
+              this.cdr.detectChanges();
+            }
+          });
           this.initializeSocket();
           this.connectToRoom();
           this.mapService.getActiveMap(+this.roomId).subscribe({

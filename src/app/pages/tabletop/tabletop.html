@@ -12,7 +12,10 @@
         {{ isConnected ? 'Conectado — Sala ' + roomId : 'Conectando...' }}
       </div>
     </div>
-
+    <div class="control-section" *ngIf="currentGame">
+      <h3>{{ currentGame.name }}</h3>
+      <small>Código: <strong>{{ currentGame.invite_code }}</strong></small>
+    </div>
     <!-- Configurar cuadrícula -->
     <div class="control-section">
       <h3>Cuadrícula</h3>
