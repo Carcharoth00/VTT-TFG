@@ -100,12 +100,6 @@
         🚪 Salir del Tablero
       </button>
     </div>
-
-    <div class="control-section">
-      <button (click)="isCharactersPanelOpen = !isCharactersPanelOpen" class="btn-characters">
-        📋 {{ isCharactersPanelOpen ? 'Cerrar fichas' : 'Ver fichas' }}
-      </button>
-    </div>
   </aside>
 
   <!-- Área del tablero -->
@@ -132,22 +126,17 @@
     </div>
   </main>
 
-  <!-- Panel de Chat -->
-  <aside class="characters-aside" [class.closed]="!isCharactersPanelOpen">
-    <app-characters *ngIf="isCharactersPanelOpen" [gameId]="roomId ? +roomId : 0" | number
-      [currentUserId]="authService.getCurrentUser()?.id || 0">
-    </app-characters>
-  </aside>
-  <aside class="chat-panel" [class.closed]="!isChatOpen">
-    <div class="chat-header">
-      <h3>💬 Chat</h3>
-      <button (click)="toggleChat()" class="btn-toggle-chat">
-        {{ isChatOpen ? '▶' : '◀' }}
-      </button>
+  <aside class="right-panel">
+
+    <!-- Pestañas -->
+    <div class="panel-tabs">
+      <button (click)="activePanel = 'chat'" [class.active]="activePanel === 'chat'">💬 Chat</button>
+      <button (click)="activePanel = 'characters'" [class.active]="activePanel === 'characters'">📋 Ficha</button>
+      <button (click)="activePanel = 'notes'" [class.active]="activePanel === 'notes'">📝 Notas</button>
     </div>
 
-    <div class="chat-content" *ngIf="isChatOpen">
-      <!-- Quick Dice Buttons -->
+    <!-- Chat -->
+    <div class="panel-content" *ngIf="activePanel === 'chat'">
       <div class="quick-dice">
         <button (click)="quickRoll('d20')" class="btn-dice" title="Tirar d20">d20</button>
         <button (click)="quickRoll('d12')" class="btn-dice" title="Tirar d12">d12</button>
@@ -157,19 +146,15 @@
         <button (click)="quickRoll('d4')" class="btn-dice" title="Tirar d4">d4</button>
       </div>
 
-      <!-- Messages -->
       <div class="chat-messages">
         <div *ngFor="let msg of chatMessages" class="chat-message" [class.chat-message-dice]="msg.type === 'dice'"
           [class.chat-message-system]="msg.type === 'system'">
-
           <div class="message-header">
             <span class="message-username">{{ msg.username }}</span>
             <span class="message-time">{{ formatTimestamp(msg.timestamp) }}</span>
           </div>
-
           <div class="message-content">
             <span *ngIf="msg.type === 'message'">{{ msg.message }}</span>
-
             <div *ngIf="msg.type === 'dice' && msg.diceRoll" class="dice-result">
               <div class="dice-formula">🎲 {{ msg.diceRoll.formula }}</div>
               <div class="dice-rolls">
@@ -180,19 +165,14 @@
               </div>
               <div class="dice-total">Total: <strong>{{ msg.diceRoll.total }}</strong></div>
             </div>
-
-            <span *ngIf="msg.type === 'system'" class="system-text">
-              ℹ️ {{ msg.message }}
-            </span>
+            <span *ngIf="msg.type === 'system'" class="system-text">ℹ️ {{ msg.message }}</span>
           </div>
         </div>
-
         <div *ngIf="chatMessages.length === 0" class="chat-empty">
           No hay mensajes aún. ¡Sé el primero en escribir!
         </div>
       </div>
 
-      <!-- Input -->
       <div class="chat-input-container">
         <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()" placeholder="Mensaje o /roll 2d6+3"
           class="chat-input" [disabled]="!isConnected">
@@ -200,10 +180,21 @@
           Enviar
         </button>
       </div>
-
       <div class="chat-help">
         <small>💡 Usa /roll o /r para tirar dados (ej: /roll 2d6+3)</small>
       </div>
     </div>
+
+    <!-- Fichas -->
+    <div class="panel-content" *ngIf="activePanel === 'characters'">
+      <app-characters [gameId]="roomId ? +roomId : 0" [currentUserId]="authService.getCurrentUser()?.id || 0">
+      </app-characters>
+    </div>
+
+    <!-- Notas -->
+    <div class="panel-content" *ngIf="activePanel === 'notes'">
+      <app-notes [gameId]="roomId ? +roomId : 0"></app-notes>
+    </div>
+
   </aside>
 </div>

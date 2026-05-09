@@ -11,11 +11,12 @@ import { environment } from '../../../environments/environment';
 import { CharactersComponent } from '../characters/characters';
 import { MapService, GameMap } from '../../services/map.service';
 import { GameService, Game } from '../../services/game.service';
+import { NotesComponent } from '../notes/notes';
 
 @Component({
   selector: 'app-tabletop',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule, CharactersComponent],
+  imports: [CommonModule, FormsModule, DragDropModule, CharactersComponent, NotesComponent],
   templateUrl: './tabletop.html',
   styleUrl: './tabletop.css',
 })
@@ -42,11 +43,10 @@ export class Tabletop implements OnInit, OnDestroy {
   username: string = '';
 
   // Chat
+  activePanel: 'chat' | 'characters' | 'notes' = 'chat';
   chatMessages: ChatMessage[] = [];
   newMessage: string = '';
-  isChatOpen = true;
-  isCharactersPanelOpen = false;
-
+  
   //Map
   maps: GameMap[] = [];
   activeMapId: number | null = null;
@@ -452,10 +452,6 @@ export class Tabletop implements OnInit, OnDestroy {
   }
 
   // ========== CHAT ==========
-
-  toggleChat() {
-    this.isChatOpen = !this.isChatOpen;
-  }
 
   sendMessage() {
     if (!this.newMessage.trim() || !this.isConnected) return;

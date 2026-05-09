@@ -1,0 +1,42 @@
+<div class="notes-panel">
+
+  <!-- Lista de notas -->
+  <div class="notes-list" *ngIf="!isEditing">
+    <div class="notes-header">
+      <h3>Mis notas</h3>
+      <button (click)="newNote()" class="btn-new-note">+ Nueva</button>
+    </div>
+
+    <p class="error-msg" *ngIf="error">{{ error }}</p>
+
+    <p class="empty-msg" *ngIf="notes.length === 0">No tienes notas todavía.</p>
+
+    <div class="note-item" *ngFor="let note of notes" (click)="openNote(note)">
+      <div class="note-item-info">
+        <span class="note-title">{{ note.title }}</span>
+        <span class="note-date">{{ note.updated_at | date:'dd/MM/yy' }}</span>
+      </div>
+      <button (click)="$event.stopPropagation(); deleteNote(note)" class="btn-delete-note">🗑️</button>
+    </div>
+  </div>
+
+  <!-- Editor de nota -->
+  <div class="note-editor" *ngIf="isEditing">
+    <div class="editor-header">
+      <button (click)="cancel()" class="btn-back">← Volver</button>
+      <button (click)="saveNote()" class="btn-save-note">Guardar</button>
+    </div>
+
+    <input
+      [(ngModel)]="editTitle"
+      placeholder="Título de la nota"
+      class="note-title-input" />
+
+    <textarea
+      [(ngModel)]="editContent"
+      placeholder="Escribe aquí tu nota..."
+      class="note-content-input">
+    </textarea>
+  </div>
+
+</div>
