@@ -13,12 +13,12 @@ class Token {
 
   // Crear token
   static async create(tokenData) {
-    const { game_id, map_id = null, x, y, color, label } = tokenData;
+    const { game_id, map_id = null, x, y, color, label, image = null, name = null } = tokenData;
     const [result] = await pool.execute(
-      'INSERT INTO tokens (game_id, map_id, x, y, color, label) VALUES (?, ?, ?, ?, ?, ?)',
-      [game_id, map_id, x, y, color, label]
+      'INSERT INTO tokens (game_id, map_id, x, y, color, label, image, name) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [game_id, map_id, x, y, color, label, image, name]
     );
-    return { id: result.insertId, game_id, map_id, x, y, color, label };
+    return { id: result.insertId, game_id, map_id, x, y, color, label, image, name };
   }
 
   // Actualizar posición

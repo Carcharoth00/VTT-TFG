@@ -4,6 +4,8 @@ export interface Token {
   y: number;
   color: string;
   label?: string;
+  image?: string | null;
+  name?: string | null;
 }
 
 export interface GridConfig {

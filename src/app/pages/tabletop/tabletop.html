@@ -1,39 +1,34 @@
 <div class="tabletop-container">
   <aside class="control-panel">
-    <!-- Botón volver atrás -->
     <div class="header-controls">
       <h2>VTT - Virtual Tabletop</h2>
     </div>
 
-    <!-- Conexión Socket.IO -->
     <div class="control-section connection-section">
       <div class="connection-status" [class.connected]="isConnected">
         <span class="status-indicator"></span>
         {{ isConnected ? 'Conectado — Sala ' + roomId : 'Conectando...' }}
       </div>
     </div>
+
     <div class="control-section" *ngIf="currentGame">
       <h3>{{ currentGame.name }}</h3>
       <small>Código: <strong>{{ currentGame.invite_code }}</strong></small>
     </div>
-    <!-- Configurar cuadrícula -->
+
     <div class="control-section">
       <h3>Cuadrícula</h3>
-      <label>
-        Tamaño celda (px):
+      <label>Tamaño celda (px):
         <input type="number" [(ngModel)]="gridSize" (change)="updateGridDimensions()" min="20" max="100">
       </label>
-      <label>
-        Columnas:
+      <label>Columnas:
         <input type="number" [(ngModel)]="gridColumns" (change)="updateGridDimensions()" min="5" max="50">
       </label>
-      <label>
-        Filas:
+      <label>Filas:
         <input type="number" [(ngModel)]="gridRows" (change)="updateGridDimensions()" min="5" max="50">
       </label>
     </div>
 
-    <!-- Zoom -->
     <div class="control-section">
       <h3>Zoom</h3>
       <div class="zoom-controls">
@@ -44,36 +39,25 @@
       <button (click)="resetZoom()" class="btn-reset">Resetear Zoom</button>
     </div>
 
-    <!-- Subir imagen de fondo -->
     <div class="control-section">
       <h3>Fondo del Tablero</h3>
-
-      <!-- Input oculto -->
       <input type="file" accept="image/*" (change)="onImageUpload($event)" #fileInput style="display: none;">
-
-      <!-- Botón personalizado -->
       <button (click)="fileInput.click()" class="btn-upload">
         <span class="upload-icon">📁</span>
         {{ backgroundImage ? 'Cambiar Imagen' : 'Subir Imagen' }}
       </button>
-
-      <p *ngIf="backgroundImage" class="success">
-        ✓ Imagen cargada correctamente
-      </p>
-
+      <p *ngIf="backgroundImage" class="success">✓ Imagen cargada correctamente</p>
       <button *ngIf="backgroundImage" (click)="removeBackground(); fileInput.value=''" class="btn-danger">
         🗑️ Eliminar Fondo
       </button>
     </div>
 
-    <!-- Agregar tokens -->
     <div class="control-section">
       <h3>Tokens / Fichas</h3>
-      <button (click)="addToken()" class="btn-add">+ Agregar Token</button>
+      <button (click)="addToken()" class="btn-upload">+ Agregar Token</button>
       <p class="token-count">Total en tablero: <strong>{{ tokens.length }}</strong></p>
     </div>
 
-    <!-- Info -->
     <div class="control-section">
       <h3>Jugadores conectados ({{ connectedUsers.length }})</h3>
       <div class="connected-users">
@@ -83,6 +67,7 @@
         </div>
       </div>
     </div>
+
     <div class="control-section info-section">
       <h3>ℹ️ Instrucciones</h3>
       <ul class="instructions">
@@ -93,49 +78,43 @@
       </ul>
     </div>
 
-
-    <!-- Salir del tablero -->
     <div class="control-section exit-section">
-      <button (click)="goBack()" class="btn-exit">
-        🚪 Salir del Tablero
-      </button>
+      <button (click)="goBack()" class="btn-exit">🚪 Salir del Tablero</button>
     </div>
   </aside>
 
-  <!-- Área del tablero -->
   <main #tabletopMain class="tabletop-main">
-    <div #gridWrapper class="grid-wrapper" [style.width.px]="gridColumns * gridSize * zoomLevel"
+    <div #gridWrapper class="grid-wrapper"
+      [style.width.px]="gridColumns * gridSize * zoomLevel"
       [style.height.px]="gridRows * gridSize * zoomLevel"
       [style.backgroundImage]="backgroundImage ? 'url(' + backgroundImage + ')' : 'none'">
 
-      <!-- Cuadrícula de fondo -->
-      <div class="grid" [style.gridTemplateColumns]="'repeat(' + gridColumns + ', 1fr)'"
+      <div class="grid"
+        [style.gridTemplateColumns]="'repeat(' + gridColumns + ', 1fr)'"
         [style.gridTemplateRows]="'repeat(' + gridRows + ', 1fr)'">
         <div class="grid-cell" *ngFor="let i of getGridCells()"></div>
       </div>
 
-      <!-- Tokens con CDK Drag & Drop -->
       <div class="token" *ngFor="let token of tokens; trackBy: trackByTokenId" cdkDrag
         [cdkDragFreeDragPosition]="{x: token.x * getScaledGridSize(), y: token.y * getScaledGridSize()}"
-        (cdkDragEnded)="onTokenDragEnded($event, token)" [style.width.px]="getScaledGridSize()"
-        [style.height.px]="getScaledGridSize()" [style.backgroundColor]="token.color">
-
-        <span class="token-label">{{ token.label || token.id }}</span>
+        (cdkDragEnded)="onTokenDragEnded($event, token)"
+        [style.width.px]="getScaledGridSize()"
+        [style.height.px]="getScaledGridSize()"
+        [style.backgroundColor]="token.image ? 'transparent' : token.color">
+        <img *ngIf="token.image" [src]="token.image" class="token-image" alt="token"/>
+        <span class="token-label" *ngIf="!token.image">{{ token.label || token.name || token.id }}</span>
         <button (click)="removeToken(token.id)" class="btn-remove" title="Eliminar token">×</button>
       </div>
     </div>
   </main>
 
   <aside class="right-panel">
-
-    <!-- Pestañas -->
     <div class="panel-tabs">
       <button (click)="activePanel = 'chat'" [class.active]="activePanel === 'chat'">💬 Chat</button>
       <button (click)="activePanel = 'characters'" [class.active]="activePanel === 'characters'">📋 Ficha</button>
       <button (click)="activePanel = 'notes'" [class.active]="activePanel === 'notes'">📝 Notas</button>
     </div>
 
-    <!-- Chat -->
     <div class="panel-content" *ngIf="activePanel === 'chat'">
       <div class="quick-dice">
         <button (click)="quickRoll('d20')" class="btn-dice" title="Tirar d20">d20</button>
@@ -147,7 +126,8 @@
       </div>
 
       <div class="chat-messages">
-        <div *ngFor="let msg of chatMessages" class="chat-message" [class.chat-message-dice]="msg.type === 'dice'"
+        <div *ngFor="let msg of chatMessages" class="chat-message"
+          [class.chat-message-dice]="msg.type === 'dice'"
           [class.chat-message-system]="msg.type === 'system'">
           <div class="message-header">
             <span class="message-username">{{ msg.username }}</span>
@@ -159,7 +139,8 @@
               <div class="dice-formula">🎲 {{ msg.diceRoll.formula }}</div>
               <div class="dice-rolls">
                 <span *ngFor="let die of msg.diceRoll.individualDice" class="die-result"
-                  [class.die-critical]="die.result === die.sides" [class.die-fumble]="die.result === 1">
+                  [class.die-critical]="die.result === die.sides"
+                  [class.die-fumble]="die.result === 1">
                   {{ die.result }}
                 </span>
               </div>
@@ -174,8 +155,8 @@
       </div>
 
       <div class="chat-input-container">
-        <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()" placeholder="Mensaje o /roll 2d6+3"
-          class="chat-input" [disabled]="!isConnected">
+        <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()"
+          placeholder="Mensaje o /roll 2d6+3" class="chat-input" [disabled]="!isConnected">
         <button (click)="sendMessage()" class="btn-send" [disabled]="!isConnected || !newMessage.trim()">
           Enviar
         </button>
@@ -185,16 +166,65 @@
       </div>
     </div>
 
-    <!-- Fichas -->
     <div class="panel-content" *ngIf="activePanel === 'characters'">
-      <app-characters [gameId]="roomId ? +roomId : 0" [currentUserId]="authService.getCurrentUser()?.id || 0">
+      <app-characters [gameId]="roomId ? +roomId : 0"
+        [currentUserId]="authService.getCurrentUser()?.id || 0">
       </app-characters>
     </div>
 
-    <!-- Notas -->
     <div class="panel-content" *ngIf="activePanel === 'notes'">
       <app-notes [gameId]="roomId ? +roomId : 0"></app-notes>
     </div>
-
   </aside>
+
+  <!-- Modal crear token - FUERA de todos los paneles -->
+  <div class="modal-overlay" *ngIf="showTokenModal">
+    <div class="modal token-modal">
+      <h2>Nuevo token</h2>
+
+      <div class="token-preview">
+        <div class="token-preview-circle" [style.backgroundColor]="newTokenColor">
+          <img *ngIf="newTokenImage" [src]="newTokenImage" class="token-preview-img" alt="token"/>
+          <span *ngIf="!newTokenImage">{{ newTokenName ? newTokenName.charAt(0) : '?' }}</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Nombre</label>
+        <input [(ngModel)]="newTokenName" placeholder="Nombre del token"/>
+      </div>
+
+      <div class="form-group" *ngIf="!newTokenImage">
+        <label>Color</label>
+        <input type="color" [(ngModel)]="newTokenColor"/>
+      </div>
+
+      <div class="form-group" *ngIf="myCharacters.length > 0">
+        <label>Usar personaje</label>
+        <div class="character-selector">
+          <div class="character-option" *ngFor="let char of myCharacters"
+            (click)="selectCharacterForToken(char)"
+            [class.selected]="newTokenName === char.name">
+            <img *ngIf="char.avatar" [src]="char.avatar" class="char-option-avatar" alt="avatar"/>
+            <div *ngIf="!char.avatar" class="char-option-placeholder">{{ char.name.charAt(0) }}</div>
+            <span>{{ char.name }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>O sube una imagen</label>
+        <div class="avatar-buttons">
+          <input type="file" accept="image/*" (change)="onTokenImageUpload($event)" #tokenImgInput style="display:none">
+          <button type="button" (click)="tokenImgInput.click()" class="btn-upload-avatar">Subir imagen</button>
+          <button type="button" *ngIf="newTokenImage" (click)="newTokenImage = null" class="btn-remove-avatar">Eliminar</button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button (click)="confirmAddToken()">Crear token</button>
+        <button (click)="showTokenModal = false">Cancelar</button>
+      </div>
+    </div>
+  </div>
 </div>

@@ -12,6 +12,7 @@ import { CharactersComponent } from '../characters/characters';
 import { MapService, GameMap } from '../../services/map.service';
 import { GameService, Game } from '../../services/game.service';
 import { NotesComponent } from '../notes/notes';
+import { Character, CharacterService } from '../../services/character.service';
 
 @Component({
   selector: 'app-tabletop',
@@ -35,6 +36,11 @@ export class Tabletop implements OnInit, OnDestroy {
   // Tokens
   tokens: Token[] = [];
   nextTokenId = 1;
+  showTokenModal = false;
+  myCharacters: Character[] = [];
+  newTokenImage: string | null = null;
+  newTokenName: string = '';
+  newTokenColor: string = '#FF0000';
 
   // Socket.IO
   private socket!: Socket;
@@ -46,7 +52,7 @@ export class Tabletop implements OnInit, OnDestroy {
   activePanel: 'chat' | 'characters' | 'notes' = 'chat';
   chatMessages: ChatMessage[] = [];
   newMessage: string = '';
-  
+
   //Map
   maps: GameMap[] = [];
   activeMapId: number | null = null;
@@ -57,7 +63,8 @@ export class Tabletop implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     public authService: AuthService,
     private mapService: MapService,
-    private gameService: GameService
+    private gameService: GameService,
+    private characterService: CharacterService
   ) {
     console.log('✅ Tabletop constructor - Router inyectado:', !!this.router);
   }
@@ -72,6 +79,11 @@ export class Tabletop implements OnInit, OnDestroy {
             next: (response) => {
               this.currentGame = response.game;
               this.cdr.detectChanges();
+            }
+          });
+          this.characterService.getMyCharacters(+this.roomId).subscribe({
+            next: (response) => {
+              this.myCharacters = response.characters;
             }
           });
           this.initializeSocket();
@@ -379,17 +391,45 @@ export class Tabletop implements OnInit, OnDestroy {
   // ========== TOKENS (CDK Drag & Drop) ==========
 
   addToken() {
-    console.log('addToken llamado, isConnected:', this.isConnected, 'roomId:', this.roomId);
+    this.newTokenImage = null;
+    this.newTokenName = '';
+    this.newTokenColor = '#FF0000';
+    this.showTokenModal = true;
+    this.cdr.detectChanges();
+  }
+
+  selectCharacterForToken(character: Character) {
+    this.newTokenImage = character.avatar || null;
+    this.newTokenName = character.name;
+    this.cdr.detectChanges();
+  }
+
+  onTokenImageUpload(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.newTokenImage = e.target.result;
+      this.cdr.detectChanges();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  confirmAddToken() {
     if (!this.isConnected) return;
 
     const token = {
       x: 0,
       y: 0,
-      color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
-      label: `T${Date.now() % 1000}`,
+      color: this.newTokenColor,
+      label: this.newTokenName || `T${Date.now() % 1000}`,
+      image: this.newTokenImage,
+      name: this.newTokenName || null
     };
 
     this.socket.emit('add-token', { roomId: this.roomId, token });
+    this.showTokenModal = false;
+    this.cdr.detectChanges();
   }
 
   removeToken(id: number) {

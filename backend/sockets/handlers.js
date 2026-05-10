@@ -81,9 +81,7 @@ function setupSocketHandlers(io) {
 
     // Añadir un token
     socket.on('add-token', async ({ roomId, token }) => {
-      console.log('add-token recibido:', roomId, token);
       const room = rooms.get(roomId);
-      console.log('room encontrada:', !!room);
       if (room) {
         try {
           const savedToken = await Token.create({
@@ -91,10 +89,11 @@ function setupSocketHandlers(io) {
             x: token.x,
             y: token.y,
             color: token.color,
-            label: token.label
+            label: token.label,
+            image: token.image || null,
+            name: token.name || null
           });
           room.tokens.push(savedToken);
-          // Emitir el token con el ID real de la BD
           io.to(roomId).emit('token-added', savedToken);
         } catch (error) {
           console.error('Error guardando token:', error);
