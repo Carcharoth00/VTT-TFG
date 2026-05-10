@@ -448,25 +448,14 @@ html {
   margin-right: 0.3rem;
 }
 
-.connected-users {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+.user-role-badge {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: #6b7280;
 }
 
-.connected-user {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.user-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #22c55e;
-  flex-shrink: 0;
+.gm-badge {
+  color: #f59e0b;
 }
 
 /* Exit Section */
@@ -1270,4 +1259,62 @@ html {
 .modal-actions button:last-child {
   background: rgba(255, 255, 255, 0.1);
   color: white;
+}
+
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+}
+
+.library-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.375rem;
+}
+
+.library-thumb {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.library-name {
+  font-size: 0.7rem;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.library-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.library-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.library-preview-modal {
+  max-width: 400px;
+  text-align: center;
+}
+
+.library-preview-img {
+  width: 200px;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 1rem;
 }

@@ -9,6 +9,15 @@
         <span class="status-indicator"></span>
         {{ isConnected ? 'Conectado — Sala ' + roomId : 'Conectando...' }}
       </div>
+      <div class="connected-users" style="margin-top: 0.75rem">
+        <div class="connected-user" *ngFor="let user of connectedUsers">
+          <span class="user-indicator"></span>
+          <span>{{ user.username }}</span>
+          <span class="user-role-badge" [class.gm-badge]="user.role === 'gm'">
+            {{ user.role === 'gm' ? '👑 GM' : '🎭' }}
+          </span>
+        </div>
+      </div>
     </div>
 
     <div class="control-section" *ngIf="currentGame">
@@ -58,16 +67,6 @@
       <p class="token-count">Total en tablero: <strong>{{ tokens.length }}</strong></p>
     </div>
 
-    <div class="control-section">
-      <h3>Jugadores conectados ({{ connectedUsers.length }})</h3>
-      <div class="connected-users">
-        <div class="connected-user" *ngFor="let user of connectedUsers">
-          <span class="user-indicator"></span>
-          <span>{{ user.username }}</span>
-        </div>
-      </div>
-    </div>
-
     <div class="control-section info-section">
       <h3>ℹ️ Instrucciones</h3>
       <ul class="instructions">
@@ -84,24 +83,20 @@
   </aside>
 
   <main #tabletopMain class="tabletop-main">
-    <div #gridWrapper class="grid-wrapper"
-      [style.width.px]="gridColumns * gridSize * zoomLevel"
+    <div #gridWrapper class="grid-wrapper" [style.width.px]="gridColumns * gridSize * zoomLevel"
       [style.height.px]="gridRows * gridSize * zoomLevel"
       [style.backgroundImage]="backgroundImage ? 'url(' + backgroundImage + ')' : 'none'">
 
-      <div class="grid"
-        [style.gridTemplateColumns]="'repeat(' + gridColumns + ', 1fr)'"
+      <div class="grid" [style.gridTemplateColumns]="'repeat(' + gridColumns + ', 1fr)'"
         [style.gridTemplateRows]="'repeat(' + gridRows + ', 1fr)'">
         <div class="grid-cell" *ngFor="let i of getGridCells()"></div>
       </div>
 
       <div class="token" *ngFor="let token of tokens; trackBy: trackByTokenId" cdkDrag
         [cdkDragFreeDragPosition]="{x: token.x * getScaledGridSize(), y: token.y * getScaledGridSize()}"
-        (cdkDragEnded)="onTokenDragEnded($event, token)"
-        [style.width.px]="getScaledGridSize()"
-        [style.height.px]="getScaledGridSize()"
-        [style.backgroundColor]="token.image ? 'transparent' : token.color">
-        <img *ngIf="token.image" [src]="token.image" class="token-image" alt="token"/>
+        (cdkDragEnded)="onTokenDragEnded($event, token)" [style.width.px]="getScaledGridSize()"
+        [style.height.px]="getScaledGridSize()" [style.backgroundColor]="token.image ? 'transparent' : token.color">
+        <img *ngIf="token.image" [src]="token.image" class="token-image" alt="token" />
         <span class="token-label" *ngIf="!token.image">{{ token.label || token.name || token.id }}</span>
         <button (click)="removeToken(token.id)" class="btn-remove" title="Eliminar token">×</button>
       </div>
@@ -113,6 +108,8 @@
       <button (click)="activePanel = 'chat'" [class.active]="activePanel === 'chat'">💬 Chat</button>
       <button (click)="activePanel = 'characters'" [class.active]="activePanel === 'characters'">📋 Ficha</button>
       <button (click)="activePanel = 'notes'" [class.active]="activePanel === 'notes'">📝 Notas</button>
+      <button *ngIf="isGM" (click)="activePanel = 'library'" [class.active]="activePanel === 'library'">🗂️
+        Biblioteca</button>
     </div>
 
     <div class="panel-content" *ngIf="activePanel === 'chat'">
@@ -126,8 +123,7 @@
       </div>
 
       <div class="chat-messages">
-        <div *ngFor="let msg of chatMessages" class="chat-message"
-          [class.chat-message-dice]="msg.type === 'dice'"
+        <div *ngFor="let msg of chatMessages" class="chat-message" [class.chat-message-dice]="msg.type === 'dice'"
           [class.chat-message-system]="msg.type === 'system'">
           <div class="message-header">
             <span class="message-username">{{ msg.username }}</span>
@@ -139,8 +135,7 @@
               <div class="dice-formula">🎲 {{ msg.diceRoll.formula }}</div>
               <div class="dice-rolls">
                 <span *ngFor="let die of msg.diceRoll.individualDice" class="die-result"
-                  [class.die-critical]="die.result === die.sides"
-                  [class.die-fumble]="die.result === 1">
+                  [class.die-critical]="die.result === die.sides" [class.die-fumble]="die.result === 1">
                   {{ die.result }}
                 </span>
               </div>
@@ -155,8 +150,8 @@
       </div>
 
       <div class="chat-input-container">
-        <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()"
-          placeholder="Mensaje o /roll 2d6+3" class="chat-input" [disabled]="!isConnected">
+        <input type="text" [(ngModel)]="newMessage" (keyup.enter)="sendMessage()" placeholder="Mensaje o /roll 2d6+3"
+          class="chat-input" [disabled]="!isConnected">
         <button (click)="sendMessage()" class="btn-send" [disabled]="!isConnected || !newMessage.trim()">
           Enviar
         </button>
@@ -167,13 +162,49 @@
     </div>
 
     <div class="panel-content" *ngIf="activePanel === 'characters'">
-      <app-characters [gameId]="roomId ? +roomId : 0"
-        [currentUserId]="authService.getCurrentUser()?.id || 0">
+      <app-characters [gameId]="roomId ? +roomId : 0" [currentUserId]="authService.getCurrentUser()?.id || 0">
       </app-characters>
     </div>
 
     <div class="panel-content" *ngIf="activePanel === 'notes'">
       <app-notes [gameId]="roomId ? +roomId : 0"></app-notes>
+    </div>
+
+    <div class="panel-content" *ngIf="activePanel === 'library'">
+      <div class="library-header">
+        <h3>Biblioteca de tokens</h3>
+      </div>
+
+      <div class="form-group">
+        <label>Subir imagen</label>
+        <input type="file" accept="image/*" (change)="onLibraryImageUpload($event)" #libraryInput style="display:none">
+        <button (click)="libraryInput.click()" class="btn-upload">📁 Subir imagen</button>
+      </div>
+
+      <div class="library-grid" *ngIf="libraryImages.length > 0">
+        <div class="library-item" *ngFor="let img of libraryImages; let i = index">
+          <img [src]="img.image" class="library-thumb" alt="token" (click)="selectedLibraryImage = img" />
+          <span class="library-name">{{ img.name }}</span>
+          <div class="library-actions">
+            <button (click)="placeLibraryToken(img)" title="Colocar en mapa">➕</button>
+            <button (click)="removeLibraryImage(img)" title="Eliminar">🗑️</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="empty-msg" *ngIf="libraryImages.length === 0">No hay imágenes en la biblioteca.</p>
+
+      <div class="modal-overlay" *ngIf="selectedLibraryImage" (click)="selectedLibraryImage = null">
+        <div class="modal library-preview-modal" (click)="$event.stopPropagation()">
+          <img [src]="selectedLibraryImage.image" class="library-preview-img" alt="preview" />
+          <p>{{ selectedLibraryImage.name }}</p>
+          <div class="modal-actions">
+            <button (click)="placeLibraryToken(selectedLibraryImage); selectedLibraryImage = null">➕ Colocar en
+              mapa</button>
+            <button (click)="selectedLibraryImage = null">Cerrar</button>
+          </div>
+        </div>
+      </div>
     </div>
   </aside>
 
@@ -184,30 +215,41 @@
 
       <div class="token-preview">
         <div class="token-preview-circle" [style.backgroundColor]="newTokenColor">
-          <img *ngIf="newTokenImage" [src]="newTokenImage" class="token-preview-img" alt="token"/>
+          <img *ngIf="newTokenImage" [src]="newTokenImage" class="token-preview-img" alt="token" />
           <span *ngIf="!newTokenImage">{{ newTokenName ? newTokenName.charAt(0) : '?' }}</span>
         </div>
       </div>
 
       <div class="form-group">
         <label>Nombre</label>
-        <input [(ngModel)]="newTokenName" placeholder="Nombre del token"/>
+        <input [(ngModel)]="newTokenName" placeholder="Nombre del token" />
       </div>
 
       <div class="form-group" *ngIf="!newTokenImage">
         <label>Color</label>
-        <input type="color" [(ngModel)]="newTokenColor"/>
+        <input type="color" [(ngModel)]="newTokenColor" />
       </div>
 
       <div class="form-group" *ngIf="myCharacters.length > 0">
         <label>Usar personaje</label>
         <div class="character-selector">
-          <div class="character-option" *ngFor="let char of myCharacters"
-            (click)="selectCharacterForToken(char)"
+          <div class="character-option" *ngFor="let char of myCharacters" (click)="selectCharacterForToken(char)"
             [class.selected]="newTokenName === char.name">
-            <img *ngIf="char.avatar" [src]="char.avatar" class="char-option-avatar" alt="avatar"/>
+            <img *ngIf="char.avatar" [src]="char.avatar" class="char-option-avatar" alt="avatar" />
             <div *ngIf="!char.avatar" class="char-option-placeholder">{{ char.name.charAt(0) }}</div>
             <span>{{ char.name }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group" *ngIf="isGM && libraryImages.length > 0">
+        <label>Imagen de la biblioteca</label>
+        <div class="character-selector">
+          <div class="character-option" *ngFor="let img of libraryImages"
+            (click)="newTokenImage = img.image; newTokenName = newTokenName || img.name"
+            [class.selected]="newTokenImage === img.image">
+            <img [src]="img.image" class="char-option-avatar" alt="biblioteca" />
+            <span>{{ img.name }}</span>
           </div>
         </div>
       </div>
@@ -217,7 +259,8 @@
         <div class="avatar-buttons">
           <input type="file" accept="image/*" (change)="onTokenImageUpload($event)" #tokenImgInput style="display:none">
           <button type="button" (click)="tokenImgInput.click()" class="btn-upload-avatar">Subir imagen</button>
-          <button type="button" *ngIf="newTokenImage" (click)="newTokenImage = null" class="btn-remove-avatar">Eliminar</button>
+          <button type="button" *ngIf="newTokenImage" (click)="newTokenImage = null"
+            class="btn-remove-avatar">Eliminar</button>
         </div>
       </div>
 

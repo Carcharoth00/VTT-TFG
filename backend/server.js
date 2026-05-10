@@ -11,6 +11,7 @@ const characterRoutes = require('./routes/characters');
 const mapRoutes = require('./routes/maps');
 const { initDatabase } = require('./config/initDatabase');
 const noteRoutes = require('./routes/notes');
+const libraryRoutes = require('./routes/library');
 
 const app = express();
 const server = http.createServer(app);
@@ -36,6 +37,7 @@ app.use('/api/games', gameRoutes);
 app.use('/api/characters', characterRoutes);
 app.use('/api/maps', mapRoutes);
 app.use('/api/notes', noteRoutes);
+app.use('/api/library', libraryRoutes);
 
 // ========== SOCKET.IO ==========
 

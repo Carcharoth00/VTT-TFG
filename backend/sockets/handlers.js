@@ -10,7 +10,7 @@ function getOrCreateRoom(roomId) {
       backgroundImage: null,
       zoomLevel: 1,
       chatMessages: [],
-      users: new Map() // socketId -> { username, userId }
+      users: new Map() // socketId -> { username, userId, role }
     });
   }
   return rooms.get(roomId);
@@ -19,7 +19,8 @@ function getOrCreateRoom(roomId) {
 function getRoomUsers(room) {
   return Array.from(room.users.values()).map(u => ({
     username: u.username,
-    userId: u.userId
+    userId: u.userId,
+    role: u.role
   }));
 }
 
@@ -30,10 +31,19 @@ function setupSocketHandlers(io) {
 
     // Un usuario entra a una sala
     socket.on('join-room', async ({ roomId, username, userId }) => {
-      console.log('join-room:', roomId, username, userId);
       socket.join(roomId);
       const room = getOrCreateRoom(roomId);
-      room.users.set(socket.id, { username, userId });
+      // Obtener rol del usuario en la partida
+      let role = 'player';
+      try {
+        const [rows] = await require('../config/database').pool.execute(
+          'SELECT role_in_game FROM game_members WHERE game_id = ? AND user_id = ?',
+          [roomId, userId]
+        );
+        if (rows.length > 0) role = rows[0].role_in_game;
+      } catch (e) { }
+
+      room.users.set(socket.id, { username, userId, role });
 
       if (room.tokens.length === 0 && userId) {
         console.log('Cargando tokens de BD para partida:', roomId);

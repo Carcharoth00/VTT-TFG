@@ -13,6 +13,7 @@ import { MapService, GameMap } from '../../services/map.service';
 import { GameService, Game } from '../../services/game.service';
 import { NotesComponent } from '../notes/notes';
 import { Character, CharacterService } from '../../services/character.service';
+import { LibraryItem, LibraryService } from '../../services/library.service';
 
 @Component({
   selector: 'app-tabletop',
@@ -23,8 +24,15 @@ import { Character, CharacterService } from '../../services/character.service';
 })
 export class Tabletop implements OnInit, OnDestroy {
   @ViewChild('gridWrapper') gridWrapper!: ElementRef;
-  connectedUsers: { username: string, userId: number }[] = [];
+
+  //Usuarios
+  connectedUsers: { username: string, userId: number, role: string }[] = [];
   currentGame: Game | null = null;
+  isGM = false;
+
+  //Libreria
+  libraryImages: LibraryItem[] = [];
+  selectedLibraryImage: { name: string, image: string } | null = null;
 
   // Grid configuration
   gridSize = 50;
@@ -49,7 +57,7 @@ export class Tabletop implements OnInit, OnDestroy {
   username: string = '';
 
   // Chat
-  activePanel: 'chat' | 'characters' | 'notes' = 'chat';
+  activePanel: 'chat' | 'characters' | 'notes' | 'library' = 'chat';
   chatMessages: ChatMessage[] = [];
   newMessage: string = '';
 
@@ -64,7 +72,8 @@ export class Tabletop implements OnInit, OnDestroy {
     public authService: AuthService,
     private mapService: MapService,
     private gameService: GameService,
-    private characterService: CharacterService
+    private characterService: CharacterService,
+    private libraryService: LibraryService
   ) {
     console.log('✅ Tabletop constructor - Router inyectado:', !!this.router);
   }
@@ -75,9 +84,16 @@ export class Tabletop implements OnInit, OnDestroy {
         this.username = user.username;
         this.route.params.subscribe(params => {
           this.roomId = params['id'];
+          this.libraryService.getItems(+this.roomId).subscribe({
+            next: (response) => {
+              this.libraryImages = response.items;
+              this.cdr.detectChanges();
+            }
+          });
           this.gameService.getGame(+this.roomId).subscribe({
             next: (response) => {
               this.currentGame = response.game;
+              this.isGM = response.role === 'gm';
               this.cdr.detectChanges();
             }
           });
@@ -225,8 +241,8 @@ export class Tabletop implements OnInit, OnDestroy {
       this.scrollChatToBottom();
     });
 
-    this.socket.on('users-updated', (users: { username: string, userId: number }[]) => {
-      this.connectedUsers = users;
+    this.socket.on('users-updated', (users: { username: string, userId: number, role: string }[]) => {
+      this.connectedUsers = users.map(u => ({ ...u, role: u.role || 'player' }));
       this.cdr.markForCheck();
     });
   }
@@ -603,5 +619,41 @@ export class Tabletop implements OnInit, OnDestroy {
   // Atajos de teclado para dados comunes
   quickRoll(formula: string) {
     this.rollDice(formula);
+  }
+
+  onLibraryImageUpload(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.libraryService.addItem(+this.roomId, file.name, e.target.result).subscribe({
+        next: (response) => {
+          this.libraryImages.unshift(response.item);
+          this.cdr.detectChanges();
+        }
+      });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  placeLibraryToken(img: { name: string, image: string }) {
+    if (!this.isConnected) return;
+    const token = {
+      x: 0, y: 0,
+      color: '#FF0000',
+      label: img.name,
+      image: img.image,
+      name: img.name
+    };
+    this.socket.emit('add-token', { roomId: this.roomId, token });
+  }
+
+  removeLibraryImage(item: LibraryItem) {
+    this.libraryService.deleteItem(+this.roomId, item.id).subscribe({
+      next: () => {
+        this.libraryImages = this.libraryImages.filter(i => i.id !== item.id);
+        this.cdr.detectChanges();
+      }
+    });
   }
 }
