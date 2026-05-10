@@ -1,4 +1,5 @@
 const Token = require('../models/Token');
+const ChatMessage = require('../models/ChatMessage');
 // Estado en memoria de las salas activas
 const rooms = new Map();
 
@@ -33,6 +34,24 @@ function setupSocketHandlers(io) {
     socket.on('join-room', async ({ roomId, username, userId }) => {
       socket.join(roomId);
       const room = getOrCreateRoom(roomId);
+
+      // Cargar mensajes de BD
+      try {
+        const messages = await ChatMessage.getByGame(roomId);
+        room.chatMessages = messages.map(m => ({
+          id: m.id.toString(),
+          userId: m.user_id.toString(),
+          username: m.username || 'Usuario',
+          message: m.message,
+          timestamp: m.created_at,
+          type: m.type,
+          diceRoll: m.dice_data ? (typeof m.dice_data === 'string' ? JSON.parse(m.dice_data) : m.dice_data) : null
+        }));
+      } catch (e) {
+        console.error('Error cargando mensajes:', e);
+        room.chatMessages = [];
+      }
+
       // Obtener rol del usuario en la partida
       let role = 'player';
       try {
@@ -126,13 +145,26 @@ function setupSocketHandlers(io) {
     });
 
     // Mensaje de chat
-    socket.on('send-message', ({ roomId, message }) => {
-      // Emitir a TODOS en la sala, incluido el que envía
+    socket.on('send-message', async ({ roomId, message }) => {
+      const room = rooms.get(roomId);
+      const user = room?.users.get(socket.id);
+      if (user) {
+        try {
+          await ChatMessage.create(roomId, user.userId, message.message, 'message');
+        } catch (e) { console.error('Error guardando mensaje:', e); }
+      }
       io.to(roomId).emit('chat-message', message);
     });
 
     // Tirada de dados
-    socket.on('roll-dice', ({ roomId, message }) => {
+    socket.on('roll-dice', async ({ roomId, message }) => {
+      const room = rooms.get(roomId);
+      const user = room?.users.get(socket.id);
+      if (user) {
+        try {
+          await ChatMessage.create(roomId, user.userId, message.message, 'dice', message.diceRoll);
+        } catch (e) { console.error('Error guardando tirada:', e); }
+      }
       io.to(roomId).emit('dice-rolled', message);
     });
 

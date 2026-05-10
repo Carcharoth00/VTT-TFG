@@ -65,6 +65,10 @@ export class Tabletop implements OnInit, OnDestroy {
   maps: GameMap[] = [];
   activeMapId: number | null = null;
 
+  // Dados
+  Math = Math;
+  diceModifier = 0;
+
   constructor(
     private cdr: ChangeDetectorRef,
     private router: Router,
@@ -565,6 +569,10 @@ export class Tabletop implements OnInit, OnDestroy {
     this.socket.emit('roll-dice', { roomId: this.roomId, message });
   }
 
+  allDiceEmpty(): boolean {
+    return this.diceBuilder.every(d => d.count === 0);
+  }
+
   parseDiceFormula(formula: string): DiceRoll | null {
     // Formato: NdX+M o NdX-M o dX o NdX
     // Ejemplos: 2d6+3, d20, 3d8-2, 4d6
@@ -598,6 +606,55 @@ export class Tabletop implements OnInit, OnDestroy {
       total,
       individualDice,
     };
+  }
+
+  maxZero(n: number): number {
+    return Math.max(0, n);
+  }
+
+  diceBuilder = [
+    { label: 'd4', sides: 4, count: 0 },
+    { label: 'd6', sides: 6, count: 0 },
+    { label: 'd8', sides: 8, count: 0 },
+    { label: 'd10', sides: 10, count: 0 },
+    { label: 'd12', sides: 12, count: 0 },
+    { label: 'd20', sides: 20, count: 0 },
+  ];
+
+  rollDiceBuilder() {
+    const activeDice = this.diceBuilder.filter(d => d.count > 0);
+    if (activeDice.length === 0) return;
+
+    const individualDice: { sides: number, result: number }[] = [];
+    let total = this.diceModifier;
+
+    for (const die of activeDice) {
+      for (let i = 0; i < die.count; i++) {
+        const result = Math.floor(Math.random() * die.sides) + 1;
+        individualDice.push({ sides: die.sides, result });
+        total += result;
+      }
+    }
+
+    const formula = activeDice.map(d => `${d.count}${d.label}`).join('+')
+      + (this.diceModifier !== 0 ? (this.diceModifier > 0 ? '+' : '') + this.diceModifier : '');
+
+    const message: ChatMessage = {
+      id: Date.now().toString(),
+      userId: this.socket.id || '',
+      username: this.username,
+      message: `Tiró ${formula}`,
+      timestamp: new Date(),
+      type: 'dice',
+      diceRoll: { formula, results: individualDice.map(d => d.result), total, individualDice }
+    };
+
+    this.socket.emit('roll-dice', { roomId: this.roomId, message });
+  }
+
+  resetDiceBuilder() {
+    this.diceBuilder.forEach(d => d.count = 0);
+    this.diceModifier = 0;
   }
 
   private scrollChatToBottom() {

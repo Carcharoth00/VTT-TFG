@@ -113,13 +113,26 @@
     </div>
 
     <div class="panel-content" *ngIf="activePanel === 'chat'">
-      <div class="quick-dice">
-        <button (click)="quickRoll('d20')" class="btn-dice" title="Tirar d20">d20</button>
-        <button (click)="quickRoll('d12')" class="btn-dice" title="Tirar d12">d12</button>
-        <button (click)="quickRoll('d10')" class="btn-dice" title="Tirar d10">d10</button>
-        <button (click)="quickRoll('d8')" class="btn-dice" title="Tirar d8">d8</button>
-        <button (click)="quickRoll('d6')" class="btn-dice" title="Tirar d6">d6</button>
-        <button (click)="quickRoll('d4')" class="btn-dice" title="Tirar d4">d4</button>
+      <div class="dice-builder">
+        <div class="dice-builder-grid">
+          <div class="dice-row" *ngFor="let die of diceBuilder">
+            <span class="die-type">{{ die.label }}</span>
+            <div class="die-counter">
+              <button (click)="die.count = maxZero(die.count - 1)">−</button>
+              <span>{{ die.count }}</span>
+              <button (click)="die.count = die.count + 1">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="dice-modifier">
+          <label>Modificador</label>
+          <input type="number" [(ngModel)]="diceModifier" />
+        </div>
+        <button (click)="rollDiceBuilder()" class="btn-roll-all"
+          [disabled]="!isConnected || allDiceEmpty()">
+          🎲 Tirar
+        </button>
+        <button (click)="resetDiceBuilder()" class="btn-reset-dice">Limpiar</button>
       </div>
 
       <div class="chat-messages">
