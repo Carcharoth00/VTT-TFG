@@ -169,72 +169,6 @@ html {
   }
 }
 
-.room-info {
-  padding: 0.6rem;
-  background-color: #1f1f1f;
-  border-radius: 6px;
-  margin-bottom: 0.8rem;
-  font-size: 0.9rem;
-}
-
-/* Botones */
-.btn-connect,
-.btn-disconnect,
-.btn-reset,
-.btn-danger {
-  width: 100%;
-  padding: 0.75rem;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.btn-connect {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-}
-
-.btn-connect:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
-
-.btn-connect:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-disconnect,
-.btn-danger {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
-  margin-top: 0.5rem;
-}
-
-.btn-disconnect:hover,
-.btn-danger:hover {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-}
-
-.btn-reset {
-  background-color: #374151;
-  color: white;
-  margin-top: 0.5rem;
-}
-
-.btn-reset:hover {
-  background-color: #4b5563;
-  transform: translateY(-1px);
-}
-
 /* Zoom */
 .zoom-controls {
   display: flex;
@@ -273,6 +207,23 @@ html {
   color: #3b82f6;
 }
 
+.zoom-input {
+  width: 60px;
+  text-align: center;
+  padding: 0.3rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-sm);
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.zoom-unit {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
 /* Mensajes */
 .success {
   color: #10b981;
@@ -287,58 +238,7 @@ html {
   color: #d1d5db;
 }
 
-/* Token Buttons */
-.token-buttons {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.btn-add-token {
-  flex: 1;
-  padding: 0.75rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.85rem;
-  transition: all 0.2s;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.btn-add-token span {
-  font-size: 1.2rem;
-}
-
-.btn-add-token:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
-
-.btn-add-image {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-}
-
-.btn-add-image:hover {
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
-}
-
 /* Token Editor */
-.token-editor {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: linear-gradient(135deg, #2a2a3e 0%, #1f1f2e 100%);
-  border: 2px solid #8b5cf6;
-  border-radius: 8px;
-  animation: slideDown 0.3s ease;
-}
 
 @keyframes slideDown {
   from {
@@ -352,74 +252,12 @@ html {
   }
 }
 
-.token-editor h4 {
-  margin: 0 0 1rem 0;
-  color: #8b5cf6;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.token-editor-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
 .token-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
   pointer-events: none;
-}
-
-.token-image-controls {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.btn-small {
-  flex: 1;
-  padding: 0.5rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.8rem;
-  transition: all 0.2s;
-}
-
-.btn-small:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
-}
-
-.btn-danger-small {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-}
-
-.btn-danger-small:hover {
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
-}
-
-.btn-close-editor {
-  width: 100%;
-  padding: 0.5rem;
-  background-color: #374151;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.85rem;
-  transition: all 0.2s;
-  margin-top: 0.5rem;
-}
-
-.btn-close-editor:hover {
-  background-color: #4b5563;
 }
 
 /* Info */
@@ -618,11 +456,6 @@ html {
   border-radius: 4px;
 }
 
-.token-label-with-image {
-  background-color: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(4px);
-}
-
 .btn-upload {
   width: 100%;
   padding: 0.75rem;
@@ -711,61 +544,6 @@ html {
 }
 
 /* ========== PANEL DE CHAT ========== */
-.chat-panel {
-  width: 320px;
-  background-color: #252525;
-  border-left: 2px solid #3b82f6;
-  display: flex;
-  flex-direction: column;
-  transition: width 0.3s ease, transform 0.3s ease;
-  position: relative;
-}
-
-.chat-panel.closed {
-  width: 40px;
-}
-
-.chat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background: linear-gradient(135deg, #2a2a3e 0%, #2a2a2a 100%);
-  border-bottom: 1px solid #3b82f6;
-}
-
-.chat-header h3 {
-  margin: 0;
-  font-size: 1.1rem;
-  color: #3b82f6;
-  white-space: nowrap;
-}
-
-.chat-panel.closed .chat-header h3 {
-  display: none;
-}
-
-.btn-toggle-chat {
-  background: none;
-  border: none;
-  color: #3b82f6;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  transition: transform 0.2s;
-}
-
-.btn-toggle-chat:hover {
-  transform: scale(1.2);
-}
-
-.chat-content {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-
 .right-panel {
   width: 320px;
   background: var(--panel-bg, #1e1e2e);
@@ -823,41 +601,6 @@ html {
   font-size: 0.875rem;
   resize: none;
   box-sizing: border-box;
-}
-
-/* Quick Dice Buttons */
-.quick-dice {
-  display: flex;
-  gap: 0.4rem;
-  padding: 0.8rem;
-  background-color: #2a2a2a;
-  border-bottom: 1px solid #383838;
-  flex-wrap: wrap;
-}
-
-.btn-dice {
-  flex: 1;
-  min-width: 45px;
-  padding: 0.5rem;
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 0.85rem;
-  transition: all 0.2s;
-  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
-}
-
-.btn-dice:hover {
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.5);
-}
-
-.btn-dice:active {
-  transform: translateY(0);
 }
 
 /* Chat Messages */
@@ -1106,22 +849,6 @@ html {
     border-right: none;
     border-bottom: 2px solid #3b82f6;
   }
-
-  .chat-panel {
-    width: 100%;
-    max-height: 50vh;
-    border-left: none;
-    border-top: 2px solid #3b82f6;
-  }
-
-  .chat-panel.closed {
-    max-height: 60px;
-    width: 100%;
-  }
-}
-
-.tabletop-main {
-  padding: 1rem;
 }
 
 .token-modal {
@@ -1318,6 +1045,7 @@ html {
   border: 3px solid rgba(255, 255, 255, 0.2);
   margin-bottom: 1rem;
 }
+
 /* ========== DICE BUILDER ========== */
 .dice-builder {
   display: flex;
@@ -1339,7 +1067,7 @@ html {
   align-items: center;
   justify-content: space-between;
   padding: 0.3rem 0.5rem;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 0.375rem;
 }
 
@@ -1358,7 +1086,7 @@ html {
 .die-counter button {
   width: 22px !important;
   height: 22px !important;
-  background: rgba(255,255,255,0.1) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
   border: none !important;
   border-radius: 4px !important;
   color: white !important;
@@ -1389,8 +1117,8 @@ html {
 .dice-modifier input {
   width: 60px;
   padding: 0.3rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 0.375rem;
   color: inherit;
   text-align: center;
@@ -1416,7 +1144,7 @@ html {
 .btn-reset-dice {
   width: 100%;
   padding: 0.4rem;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
   border: none;
   border-radius: 0.375rem;
   color: #9ca3af;

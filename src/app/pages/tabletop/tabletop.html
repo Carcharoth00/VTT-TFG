@@ -42,7 +42,9 @@
       <h3>Zoom</h3>
       <div class="zoom-controls">
         <button (click)="zoomOut()" class="btn-zoom">−</button>
-        <span class="zoom-level">{{ (zoomLevel * 100).toFixed(0) }}%</span>
+        <input type="number" class="zoom-input" [value]="(zoomLevel * 100).toFixed(0)" (change)="setZoom($event)"
+          min="50" max="300" step="20">
+        <span class="zoom-unit">%</span>
         <button (click)="zoomIn()" class="btn-zoom">+</button>
       </div>
       <button (click)="resetZoom()" class="btn-reset">Resetear Zoom</button>

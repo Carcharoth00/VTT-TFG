@@ -328,6 +328,15 @@ export class Tabletop implements OnInit, OnDestroy {
     }
   }
 
+  setZoom(event: any) {
+    const value = parseInt(event.target.value);
+    if (value >= 50 && value <= 300) {
+      this.zoomLevel = value / 100;
+      this.emitZoomUpdate();
+      this.cdr.markForCheck();
+    }
+  }
+
   resetZoom() {
     this.zoomLevel = 1;
     this.emitZoomUpdate();
@@ -413,13 +422,20 @@ export class Tabletop implements OnInit, OnDestroy {
   // ========== TOKENS (CDK Drag & Drop) ==========
 
   addToken() {
-  this.newTokenImage = null;
-  this.newTokenName = '';
-  this.newTokenColor = '#FF0000';
-  this.selectedCharacterId = null;
-  this.showTokenModal = true;
-  this.cdr.detectChanges();
-}
+    this.newTokenImage = null;
+    this.newTokenName = '';
+    this.newTokenColor = '#FF0000';
+    this.selectedCharacterId = null;
+    this.showTokenModal = true;
+    this.cdr.detectChanges();
+
+    this.characterService.getMyCharacters(+this.roomId).subscribe({
+      next: (response) => {
+        this.myCharacters = response.characters;
+        this.cdr.detectChanges();
+      }
+    });
+  }
 
   selectCharacterForToken(character: Character) {
     this.newTokenImage = character.avatar || null;

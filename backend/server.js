@@ -45,7 +45,8 @@ const io = new Server(server, {
   cors: {
     origin: process.env.CORS_ORIGIN || 'http://localhost:4200',
     credentials: true
-  }
+  },
+  maxHttpBufferSize: 1e8 // 100MB
 });
 
 setupSocketHandlers(io);
