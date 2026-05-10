@@ -120,7 +120,8 @@ function setupSocketHandlers(io) {
             color: token.color,
             label: token.label,
             image: token.image || null,
-            name: token.name || null
+            name: token.name || null,
+            character_id: token.character_id || null
           });
           room.tokens.push(savedToken);
           io.to(roomId).emit('token-added', savedToken);

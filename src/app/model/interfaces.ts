@@ -6,6 +6,7 @@ export interface Token {
   label?: string;
   image?: string | null;
   name?: string | null;
+  character_id?: number | null;
 }
 
 export interface GridConfig {

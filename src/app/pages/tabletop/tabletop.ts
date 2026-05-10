@@ -49,6 +49,7 @@ export class Tabletop implements OnInit, OnDestroy {
   newTokenImage: string | null = null;
   newTokenName: string = '';
   newTokenColor: string = '#FF0000';
+  selectedCharacterId: number | null = null;
 
   // Socket.IO
   private socket!: Socket;
@@ -68,6 +69,7 @@ export class Tabletop implements OnInit, OnDestroy {
   // Dados
   Math = Math;
   diceModifier = 0;
+  showDiceBuilder = false;
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -411,16 +413,18 @@ export class Tabletop implements OnInit, OnDestroy {
   // ========== TOKENS (CDK Drag & Drop) ==========
 
   addToken() {
-    this.newTokenImage = null;
-    this.newTokenName = '';
-    this.newTokenColor = '#FF0000';
-    this.showTokenModal = true;
-    this.cdr.detectChanges();
-  }
+  this.newTokenImage = null;
+  this.newTokenName = '';
+  this.newTokenColor = '#FF0000';
+  this.selectedCharacterId = null;
+  this.showTokenModal = true;
+  this.cdr.detectChanges();
+}
 
   selectCharacterForToken(character: Character) {
     this.newTokenImage = character.avatar || null;
     this.newTokenName = character.name;
+    this.selectedCharacterId = character.id;
     this.cdr.detectChanges();
   }
 
@@ -444,7 +448,8 @@ export class Tabletop implements OnInit, OnDestroy {
       color: this.newTokenColor,
       label: this.newTokenName || `T${Date.now() % 1000}`,
       image: this.newTokenImage,
-      name: this.newTokenName || null
+      name: this.newTokenName || null,
+      character_id: this.selectedCharacterId
     };
 
     this.socket.emit('add-token', { roomId: this.roomId, token });

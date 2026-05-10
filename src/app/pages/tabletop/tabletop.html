@@ -113,7 +113,11 @@
     </div>
 
     <div class="panel-content" *ngIf="activePanel === 'chat'">
-      <div class="dice-builder">
+      <button (click)="showDiceBuilder = !showDiceBuilder" class="btn-toggle-dice">
+        🎲 {{ showDiceBuilder ? 'Ocultar dados' : 'Lanzador de dados' }}
+      </button>
+
+      <div class="dice-builder" *ngIf="showDiceBuilder">
         <div class="dice-builder-grid">
           <div class="dice-row" *ngFor="let die of diceBuilder">
             <span class="die-type">{{ die.label }}</span>
@@ -128,8 +132,7 @@
           <label>Modificador</label>
           <input type="number" [(ngModel)]="diceModifier" />
         </div>
-        <button (click)="rollDiceBuilder()" class="btn-roll-all"
-          [disabled]="!isConnected || allDiceEmpty()">
+        <button (click)="rollDiceBuilder()" class="btn-roll-all" [disabled]="!isConnected || allDiceEmpty()">
           🎲 Tirar
         </button>
         <button (click)="resetDiceBuilder()" class="btn-reset-dice">Limpiar</button>
