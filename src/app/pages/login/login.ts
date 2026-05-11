@@ -24,7 +24,7 @@ export class LoginComponent {
   constructor(
     private authService: AuthService,
     private router: Router
-  ) {}
+  ) { }
 
   // ========== SUBMIT DEL FORMULARIO ==========
   onSubmit(): void {
@@ -54,13 +54,18 @@ export class LoginComponent {
     }).subscribe({
       next: (response) => {
         console.log('Login exitoso:', response);
-        // Redirigir al dashboard
-        this.router.navigate(['/dashboard']);
+        const pendingCode = localStorage.getItem('pendingJoinCode');
+        if (pendingCode) {
+          localStorage.removeItem('pendingJoinCode');
+          this.router.navigate(['/join', pendingCode]);
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
       },
       error: (error) => {
         console.error('Error en login:', error);
         this.isLoading = false;
-        
+
         // Mostrar mensaje de error
         if (error.error?.message) {
           this.errorMessage = error.error.message;
@@ -80,4 +85,6 @@ export class LoginComponent {
   togglePasswordVisibility(): void {
     this.showPassword = !this.showPassword;
   }
+
+
 }

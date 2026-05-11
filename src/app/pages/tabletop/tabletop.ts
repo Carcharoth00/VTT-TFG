@@ -29,6 +29,7 @@ export class Tabletop implements OnInit, OnDestroy {
   connectedUsers: { username: string, userId: number, role: string }[] = [];
   currentGame: Game | null = null;
   isGM = false;
+  copiedToClipboard = false;
 
   //Libreria
   libraryImages: LibraryItem[] = [];
@@ -733,5 +734,29 @@ export class Tabletop implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  async shareGame() {
+    const code = this.currentGame?.invite_code;
+    const url = `${window.location.origin}/join/${code}`;
+    const text = `¡Te invito a unirte a mi partida "${this.currentGame?.name}" en VTT!`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Invitación a partida VTT', text, url });
+      } catch (e) { }
+    } else {
+      await navigator.clipboard.writeText(`${text} ${url}`);
+      this.copiedToClipboard = true;
+      setTimeout(() => { this.copiedToClipboard = false; this.cdr.detectChanges(); }, 3000);
+      this.cdr.detectChanges();
+    }
+  }
+
+  shareViaWhatsApp() {
+    const code = this.currentGame?.invite_code;
+    const url = `${window.location.origin}/join/${code}`;
+    const text = encodeURIComponent(`¡Te invito a unirte a mi partida "${this.currentGame?.name}" en VTT! Entra aquí: ${url}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
   }
 }

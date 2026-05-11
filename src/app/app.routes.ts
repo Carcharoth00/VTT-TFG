@@ -4,6 +4,8 @@ import { RegisterComponent } from './pages/registro/registro';
 import { Dashboard } from './pages/dashboard/dashboard';
 import { Tabletop } from './pages/tabletop/tabletop';
 import { authGuard } from './guards/auth.guard';
+import { JoinComponent } from './pages/join/join';
+
 
 export const routes: Routes = [
   {
@@ -28,5 +30,9 @@ export const routes: Routes = [
     path: 'tabletop/:id',
     component: Tabletop,
     canActivate: [authGuard]
+  },
+  {
+    path: 'join/:code',
+    component: JoinComponent
   }
 ];

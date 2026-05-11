@@ -23,7 +23,15 @@
     <div class="control-section" *ngIf="currentGame">
       <h3>{{ currentGame.name }}</h3>
       <small>Código: <strong>{{ currentGame.invite_code }}</strong></small>
+      <button (click)="shareGame()" class="btn-upload" style="margin-top: 0.5rem">
+        📤 Compartir partida
+      </button>
+      <button (click)="shareViaWhatsApp()" class="btn-upload" style="margin-top: 0.5rem">
+        📱 Compartir por WhatsApp
+      </button>
+      <p class="success" *ngIf="copiedToClipboard">¡Copiado al portapapeles!</p>
     </div>
+
 
     <div class="control-section">
       <h3>Cuadrícula</h3>

@@ -1,0 +1,9 @@
+<div class="join-container">
+  <div class="join-card">
+    <h1>🎲 VTT</h1>
+    <p *ngIf="!error">{{ message }}</p>
+    <div *ngIf="error" class="error-alert">{{ error }}</div>
+    <button *ngIf="error" (click)="goToDashboard()">Ir al dashboard
+    </button>
+  </div>
+</div>

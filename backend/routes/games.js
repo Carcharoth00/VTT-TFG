@@ -105,4 +105,16 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+router.get('/code/:code', async (req, res) => {
+  try {
+    const game = await Game.findByInviteCode(req.params.code);
+    if (!game) return res.status(404).json({ error: 'Partida no encontrada' });
+    const membership = await Game.isMember(game.id, req.user.id);
+    if (!membership) return res.status(403).json({ error: 'No eres miembro' });
+    res.json({ game });
+  } catch (error) {
+    res.status(500).json({ error: 'Error' });
+  }
+});
+
 module.exports = router;

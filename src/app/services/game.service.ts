@@ -26,7 +26,7 @@ export class GameService {
   constructor(
     private http: HttpClient,
     private authService: AuthService
-  ) {}
+  ) { }
 
   private getHeaders(): HttpHeaders {
     const token = this.authService.getToken();
@@ -54,6 +54,12 @@ export class GameService {
     return this.http.post<{ message: string, game: Game }>(
       `${this.apiUrl}/join`,
       { invite_code },
+      { headers: this.getHeaders() }
+    );
+  }
+  getGameByCode(code: string): Observable<{ game: Game }> {
+    return this.http.get<{ game: Game }>(
+      `${this.apiUrl}/code/${code}`,
       { headers: this.getHeaders() }
     );
   }
