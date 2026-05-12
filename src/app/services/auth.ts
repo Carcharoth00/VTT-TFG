@@ -59,7 +59,7 @@ export class AuthService {
   ) {
     // Verificar si estamos en el navegador
     this.isBrowser = isPlatformBrowser(this.platformId);
-    
+
     // Solo verificar token si estamos en el navegador
     if (this.isBrowser) {
       this.checkToken();
@@ -69,7 +69,7 @@ export class AuthService {
   // ========== VERIFICAR TOKEN AL INICIO ==========
   private checkToken(): void {
     const token = this.getToken();
-    
+
     if (token) {
       // Verificar que el token sea válido
       this.verifyToken().subscribe({
@@ -86,16 +86,8 @@ export class AuthService {
   }
 
   // ========== REGISTRO ==========
-  register(data: RegisterData): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/register`, data)
-      .pipe(
-        tap(response => {
-          // Guardar token y usuario
-          this.setToken(response.token);
-          this.currentUserSubject.next(response.user);
-          this.isAuthenticatedSubject.next(true);
-        })
-      );
+  register(data: RegisterData): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/register`, data);
   }
 
   // ========== LOGIN ==========
@@ -117,11 +109,11 @@ export class AuthService {
     if (this.isBrowser) {
       localStorage.removeItem('vtt_token');
     }
-    
+
     // Limpiar estado
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);
-    
+
     // Redirigir a login
     this.router.navigate(['/login']);
   }
@@ -169,7 +161,7 @@ export class AuthService {
 
   // Verificar si el usuario está autenticado (forma síncrona)
   public isLoggedIn(): boolean {
-     return this.getToken() !== null;
+    return this.getToken() !== null;
   }
 
   // Obtener el usuario actual (forma síncrona)

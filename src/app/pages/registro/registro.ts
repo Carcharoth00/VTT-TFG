@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef  } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -69,8 +69,10 @@ export class RegisterComponent {
       role: this.role
     }).subscribe({
       next: (response) => {
-        console.log('Registro exitoso:', response);
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/login']);
+        this.errorMessage = '';
+        // Mostrar mensaje de éxito
+        alert('Cuenta creada. Revisa tu email para verificarla antes de iniciar sesión.');
       },
       error: (error) => {
         console.error('Error en registro:', error);

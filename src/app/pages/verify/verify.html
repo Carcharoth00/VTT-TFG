@@ -1,0 +1,21 @@
+<div class="verify-container">
+  <div class="verify-card">
+    <h1>🎲 VTT</h1>
+    <div *ngIf="!success && !error">
+      <p>{{ message }}</p>
+    </div>
+    <div *ngIf="success" class="success-msg">
+      <p>✅ ¡Cuenta verificada correctamente!</p>
+      <p>Ya puedes iniciar sesión.</p>
+      <button (click)="goToLogin()" class="btn-add" style="margin-top: 1rem">
+        Ir al login
+      </button>
+    </div>
+    <div *ngIf="error" class="error-alert">
+      <p>❌ {{ error }}</p>
+      <button (click)="goToLogin()" class="btn-add" style="margin-top: 1rem">
+        Ir al login
+      </button>
+    </div>
+  </div>
+</div>

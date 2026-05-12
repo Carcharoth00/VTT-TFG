@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { ChangeDetectorRef, Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -23,7 +23,8 @@ export class LoginComponent {
 
   constructor(
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private cdRef: ChangeDetectorRef
   ) { }
 
   // ========== SUBMIT DEL FORMULARIO ==========
@@ -67,16 +68,19 @@ export class LoginComponent {
         this.isLoading = false;
 
         // Mostrar mensaje de error
-        if (error.error?.message) {
+        if (error.status === 403 && error.error?.error === 'Cuenta no verificada') {
+          this.errorMessage = 'Debes verificar tu email antes de iniciar sesión. Revisa tu bandeja de entrada.';
+        } else if (error.error?.message) {
           this.errorMessage = error.error.message;
         } else if (error.status === 0) {
-          this.errorMessage = 'No se puede conectar con el servidor. Verifica que el backend esté corriendo.';
+          this.errorMessage = 'No se puede conectar con el servidor.';
         } else {
           this.errorMessage = 'Error al iniciar sesión. Intenta de nuevo.';
         }
       },
       complete: () => {
         this.isLoading = false;
+        this.cdRef.detectChanges();
       }
     });
   }
