@@ -596,37 +596,48 @@ export class Tabletop implements OnInit, OnDestroy {
   }
 
   parseDiceFormula(formula: string): DiceRoll | null {
-    // Formato: NdX+M o NdX-M o dX o NdX
-    // Ejemplos: 2d6+3, d20, 3d8-2, 4d6
-    const regex = /^(\d*)d(\d+)([+\-]\d+)?$/i;
-    const match = formula.trim().match(regex);
+    // Acepta: 2d6+1d8+3, d20, 3d8-2, 4d6, 2d6+1d4-1
+    const cleanFormula = formula.trim().toLowerCase();
 
-    if (!match) return null;
-
-    const count = match[1] ? parseInt(match[1]) : 1;
-    const sides = parseInt(match[2]);
-    const modifier = match[3] ? parseInt(match[3]) : 0;
-
-    if (count < 1 || count > 100 || sides < 2 || sides > 1000) {
-      return null;
-    }
-
-    const results: number[] = [];
     const individualDice: { sides: number; result: number }[] = [];
+    let total = 0;
+    let modifier = 0;
 
-    for (let i = 0; i < count; i++) {
-      const roll = Math.floor(Math.random() * sides) + 1;
-      results.push(roll);
-      individualDice.push({ sides, result: roll });
+    // Separar en partes por + y -
+    const parts = cleanFormula.split(/(?=[+\-])/);
+
+    for (const part of parts) {
+      const diceMatch = part.match(/^([+\-]?)(\d*)d(\d+)$/i);
+      const modMatch = part.match(/^([+\-]?\d+)$/);
+
+      if (diceMatch) {
+        const sign = diceMatch[1] === '-' ? -1 : 1;
+        const count = diceMatch[2] ? parseInt(diceMatch[2]) : 1;
+        const sides = parseInt(diceMatch[3]);
+
+        if (count < 1 || count > 100 || sides < 2 || sides > 1000) return null;
+
+        for (let i = 0; i < count; i++) {
+          const result = Math.floor(Math.random() * sides) + 1;
+          individualDice.push({ sides, result: result * sign });
+          total += result * sign;
+        }
+      } else if (modMatch) {
+        modifier += parseInt(modMatch[1]);
+      } else {
+        return null;
+      }
     }
 
-    const total = results.reduce((sum, r) => sum + r, 0) + modifier;
+    if (individualDice.length === 0) return null;
+
+    total += modifier;
 
     return {
       formula,
-      results,
+      results: individualDice.map(d => d.result),
       total,
-      individualDice,
+      individualDice: individualDice.map(d => ({ sides: d.sides, result: Math.abs(d.result) }))
     };
   }
 

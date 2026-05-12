@@ -77,10 +77,10 @@ export class LoginComponent {
         } else {
           this.errorMessage = 'Error al iniciar sesión. Intenta de nuevo.';
         }
+        this.cdRef.detectChanges();
       },
       complete: () => {
         this.isLoading = false;
-        this.cdRef.detectChanges();
       }
     });
   }
