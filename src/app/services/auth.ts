@@ -125,6 +125,10 @@ export class AuthService {
     });
   }
 
+  updateCurrentUser(user: any) {
+    this.currentUserSubject.next(user);
+  }
+
   // ========== VERIFICAR TOKEN ==========
   verifyToken(): Observable<{ valid: boolean; user: User }> {
     return this.http.post<{ valid: boolean; user: User }>(

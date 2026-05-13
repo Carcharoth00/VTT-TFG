@@ -103,6 +103,13 @@ class User {
       [hashedPassword, id]
     );
   }
+
+  static async updateProfile(id, username, avatar) {
+    await pool.execute(
+      'UPDATE users SET username = ?, avatar = ? WHERE id = ?',
+      [username, avatar, id]
+    );
+  }
 }
 
 module.exports = User;

@@ -8,6 +8,7 @@ import { JoinComponent } from './pages/join/join';
 import { VerifyComponent } from './pages/verify/verify';
 import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password';
 import { ResetPasswordComponent } from './pages/reset-password/reset-password';
+import { ProfileComponent } from './pages/profile/profile';
 
 export const routes: Routes = [
   {
@@ -49,4 +50,9 @@ export const routes: Routes = [
     path: 'reset-password/:token', 
     component: ResetPasswordComponent 
   },
+  {
+    path: 'profile',
+    component: ProfileComponent,
+    canActivate: [authGuard]
+  }
 ];

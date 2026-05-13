@@ -160,6 +160,18 @@ router.get('/me', verifyToken, async (req, res) => {
   }
 });
 
+// PUT /api/auth/profile
+router.put('/profile', verifyToken, async (req, res) => {
+  try {
+    const { username, avatar } = req.body;
+    await User.updateProfile(req.user.id, username, avatar);
+    const updatedUser = await User.findById(req.user.id);
+    res.json({ message: 'Perfil actualizado', user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al actualizar el perfil' });
+  }
+});
+
 // ========== VERIFICAR TOKEN ==========
 // POST /api/auth/verify
 router.post('/verify', verifyToken, (req, res) => {
@@ -175,7 +187,7 @@ router.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findByEmail(email);
-    
+
     // Siempre responder igual para no revelar si el email existe
     if (!user) {
       return res.json({ message: 'Si el email existe, recibirás un enlace.' });
@@ -183,10 +195,10 @@ router.post('/forgot-password', async (req, res) => {
 
     const token = require('crypto').randomBytes(32).toString('hex');
     const expires = new Date(Date.now() + 3600000); // 1 hora
-    
+
     await User.setResetToken(email, token, expires);
     await sendResetPasswordEmail(email, user.username, token);
-    
+
     res.json({ message: 'Si el email existe, recibirás un enlace.' });
   } catch (error) {
     console.error('Error forgot-password:', error);
@@ -198,7 +210,7 @@ router.post('/forgot-password', async (req, res) => {
 router.post('/reset-password', async (req, res) => {
   try {
     const { token, password } = req.body;
-    
+
     if (!password || password.length < 6) {
       return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
     }
@@ -211,7 +223,7 @@ router.post('/reset-password', async (req, res) => {
     const bcrypt = require('bcryptjs');
     const hashedPassword = await bcrypt.hash(password, 10);
     await User.resetPassword(user.id, hashedPassword);
-    
+
     res.json({ message: 'Contraseña restablecida correctamente' });
   } catch (error) {
     console.error('Error reset-password:', error);
