@@ -117,4 +117,26 @@ router.get('/code/:code', async (req, res) => {
   }
 });
 
+// PUT /api/games/:gameId/members/:userId/role
+router.put('/:gameId/members/:userId/role', async (req, res) => {
+  try {
+    const { role } = req.body;
+    
+    if (!['gm', 'player'].includes(role)) {
+      return res.status(400).json({ error: 'Rol inválido' });
+    }
+
+    // Verificar que el que hace la petición es GM
+    const membership = await Game.isMember(req.params.gameId, req.user.id);
+    if (!membership || membership.role_in_game !== 'gm') {
+      return res.status(403).json({ error: 'Solo el GM puede cambiar roles' });
+    }
+
+    await Game.updateMemberRole(req.params.gameId, req.params.userId, role);
+    res.json({ message: 'Rol actualizado correctamente' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error al actualizar el rol' });
+  }
+});
+
 module.exports = router;

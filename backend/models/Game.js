@@ -94,6 +94,14 @@ class Game {
     );
     return result.affectedRows > 0;
   }
+
+  // Actualizar el rol de un miembro en la partida (ej: player, gm)
+  static async updateMemberRole(gameId, userId, role) {
+    await pool.execute(
+      'UPDATE game_members SET role_in_game = ? WHERE game_id = ? AND user_id = ?',
+      [role, gameId, userId]
+    );
+  }
 }
 
 module.exports = Game;

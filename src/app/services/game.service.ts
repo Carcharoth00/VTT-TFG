@@ -79,4 +79,13 @@ export class GameService {
       { headers: this.getHeaders() }
     );
   }
+
+  // Cambiar rol de jugador
+  updateMemberRole(gameId: number, userId: number, role: string): Observable<{ message: string }> {
+  return this.http.put<{ message: string }>(
+    `${this.apiUrl}/${gameId}/members/${userId}/role`,
+    { role },
+    { headers: this.getHeaders() }
+  );
+}
 }

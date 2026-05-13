@@ -770,4 +770,15 @@ export class Tabletop implements OnInit, OnDestroy {
     const text = encodeURIComponent(`¡Te invito a unirte a mi partida "${this.currentGame?.name}" en VTT! Entra aquí: ${url}`);
     window.open(`https://wa.me/?text=${text}`, '_blank');
   }
+
+  toggleMemberRole(user: { username: string, userId: number, role: string }) {
+    const newRole = user.role === 'gm' ? 'player' : 'gm';
+    this.gameService.updateMemberRole(+this.roomId, user.userId, newRole).subscribe({
+      next: () => {
+        user.role = newRole;
+        this.cdr.detectChanges();
+      },
+      error: () => console.error('Error cambiando rol')
+    });
+  }
 }

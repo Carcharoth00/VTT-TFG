@@ -16,6 +16,10 @@
           <span class="user-role-badge" [class.gm-badge]="user.role === 'gm'">
             {{ user.role === 'gm' ? '👑 GM' : '🎭' }}
           </span>
+          <button *ngIf="isGM && user.userId !== authService.getCurrentUser()?.id" (click)="toggleMemberRole(user)"
+            class="btn-role-toggle" title="{{ user.role === 'gm' ? 'Quitar GM' : 'Hacer GM' }}">
+            {{ user.role === 'gm' ? '⬇️' : '⬆️' }}
+          </button>
         </div>
       </div>
     </div>
