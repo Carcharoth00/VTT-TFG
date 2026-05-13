@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-const SibApiV3Sdk = require('@getbrevo/brevo');
+const Brevo = require('@getbrevo/brevo');
 
 async function sendVerificationEmail(email, username, token) {
   const verifyUrl = `${process.env.FRONTEND_URL}/verify/${token}`;
@@ -11,15 +11,18 @@ async function sendVerificationEmail(email, username, token) {
   `;
 
   if (process.env.NODE_ENV === 'production') {
-    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-    apiInstance.authentications['apiKey'].apiKey = process.env.BREVO_API_KEY;
-
-    await apiInstance.sendTransacEmail({
-      sender: { email: 'noreply@vtt-tfg.com', name: 'VTT' },
-      to: [{ email }],
-      subject: '✅ Verifica tu cuenta en VTT',
-      htmlContent: html
-    });
+    const defaultClient = Brevo.ApiClient.instance;
+    defaultClient.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
+    
+    const apiInstance = new Brevo.TransactionalEmailsApi();
+    const sendSmtpEmail = new Brevo.SendSmtpEmail();
+    
+    sendSmtpEmail.sender = { email: 'pmontesm@gamil.com', name: 'VTT' };
+    sendSmtpEmail.to = [{ email }];
+    sendSmtpEmail.subject = '✅ Verifica tu cuenta en VTT';
+    sendSmtpEmail.htmlContent = html;
+    
+    await apiInstance.sendTransacEmail(sendSmtpEmail);
   } else {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
