@@ -86,6 +86,7 @@ export class Tabletop implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
+    window.addEventListener('keydown', this.handleKeyboard);
     this.authService.currentUser$.subscribe(user => {
       if (user && !this.isConnected) {
         this.username = user.username;
@@ -132,8 +133,10 @@ export class Tabletop implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.socket) {
       this.socket.disconnect();
+      window.removeEventListener('keydown', this.handleKeyboard);
     }
   }
+
 
   // ========== SOCKET.IO ==========
 
@@ -747,6 +750,18 @@ export class Tabletop implements OnInit, OnDestroy {
     });
   }
 
+  private handleKeyboard = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') {
+      this.showTokenModal = false;
+      this.showDiceBuilder = false;
+      this.selectedLibraryImage = null;
+      this.cdr.detectChanges();
+    }
+    if (e.key === '+' && e.ctrlKey) { e.preventDefault(); this.zoomIn(); }
+    if (e.key === '-' && e.ctrlKey) { e.preventDefault(); this.zoomOut(); }
+  };
+
+  //Compartir partida
   async shareGame() {
     const code = this.currentGame?.invite_code;
     const url = `${window.location.origin}/join/${code}`;
@@ -781,4 +796,5 @@ export class Tabletop implements OnInit, OnDestroy {
       error: () => console.error('Error cambiando rol')
     });
   }
+
 }
