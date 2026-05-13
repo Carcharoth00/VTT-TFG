@@ -11,7 +11,7 @@
 
     <section class="actions">
       <button (click)="openCreateModal()">+ Nueva partida</button>
-      <button (click)="showJoinModal = !showJoinModal">Unirse con código ({{ showJoinModal }})</button>
+      <button (click)="showJoinModal = !showJoinModal">Unirse con código</button>
     </section>
 
     <section class="games-list">
@@ -21,15 +21,34 @@
       <p *ngIf="error">{{ error }}</p>
       <p *ngIf="!loading && games.length === 0">No tienes partidas todavía.</p>
 
-      <div class="game-card" *ngFor="let game of games">
-        <div class="game-info">
-          <h3>{{ game.name }}</h3>
-          <p>{{ game.description }}</p>
-          <small>{{ game.role_in_game === 'gm' ? 'Director de juego' : 'Jugador' }} · {{ game.member_count }}
-            miembros</small>
-          <small *ngIf="game.role_in_game === 'gm'">Código: {{ game.invite_code }}</small>
+      <div class="games-grid">
+        <div class="game-card" *ngFor="let game of games">
+          <div class="game-card-header">
+            <h3>{{ game.name }}</h3>
+            <span class="role-badge" [class.gm]="game.role_in_game === 'gm'"
+              [class.player]="game.role_in_game !== 'gm'">
+              {{ game.role_in_game === 'gm' ? '👑 GM' : '🎭 Jugador' }}
+            </span>
+          </div>
+          <p *ngIf="game.description">{{ game.description }}</p>
+          <div class="game-card-meta">
+            <span>👥 {{ game.member_count }} miembros </span>
+            <div class="invite-code" *ngIf="game.role_in_game === 'gm'">
+              <span>🔑 {{ game.invite_code }}</span>
+              <button (click)="copyCode(game.invite_code)">
+                {{ copiedCode === game.invite_code ? '✅ Copiado' : 'Copiar' }}
+              </button>
+            </div>
+          </div>
+          <div class="game-card-footer">
+            <button class="btn-delete" *ngIf="game.role_in_game === 'gm'" (click)="deleteGame(game)">🗑️</button>
+            <button class="btn-enter" (click)="enterGame(game)">Entrar →</button>
+          </div>
         </div>
-        <button (click)="enterGame(game)">Entrar</button>
+        <div class="empty-state" *ngIf="!loading && games.length === 0">
+          <p>🎲 No tienes partidas todavía.</p>
+          <p>¡Crea una nueva o únete con un código!</p>
+        </div>
       </div>
     </section>
 

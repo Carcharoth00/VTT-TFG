@@ -17,6 +17,7 @@ export class Dashboard implements OnInit {
   currentUser: any = null;
   loading = false;
   error = '';
+  copiedCode: string | null = null;
 
   // Control de modales
   showCreateModal = false;
@@ -109,4 +110,22 @@ export class Dashboard implements OnInit {
     this.showJoinModal = true;
     this.cdr.detectChanges();
   }
+
+  copyCode(code: string) {
+    navigator.clipboard.writeText(code);
+    this.copiedCode = code;
+    setTimeout(() => { this.copiedCode = null; }, 2000);
+  }
+
+  deleteGame(game: Game) {
+    if (!confirm(`¿Eliminar la partida "${game.name}"? Esta acción no se puede deshacer.`)) return;
+
+    this.gameService.deleteGame(game.id).subscribe({
+      next: () => {
+        this.games = this.games.filter(g => g.id !== game.id);
+      },
+      error: () => alert('Error al eliminar la partida')
+    });
+  }
+
 }
