@@ -1,5 +1,5 @@
-const { Resend } = require('resend');
 const nodemailer = require('nodemailer');
+const SibApiV3Sdk = require('@getbrevo/brevo');
 
 async function sendVerificationEmail(email, username, token) {
   const verifyUrl = `${process.env.FRONTEND_URL}/verify/${token}`;
@@ -11,12 +11,14 @@ async function sendVerificationEmail(email, username, token) {
   `;
 
   if (process.env.NODE_ENV === 'production') {
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: 'VTT <onboarding@resend.dev>',
-      to: email,
+    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+    apiInstance.authentications['apiKey'].apiKey = process.env.BREVO_API_KEY;
+
+    await apiInstance.sendTransacEmail({
+      sender: { email: 'noreply@vtt-tfg.com', name: 'VTT' },
+      to: [{ email }],
       subject: '✅ Verifica tu cuenta en VTT',
-      html
+      htmlContent: html
     });
   } else {
     const transporter = nodemailer.createTransport({
