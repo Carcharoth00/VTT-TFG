@@ -1,5 +1,4 @@
 const nodemailer = require('nodemailer');
-const Brevo = require('@getbrevo/brevo');
 
 async function sendVerificationEmail(email, username, token) {
   const verifyUrl = `${process.env.FRONTEND_URL}/verify/${token}`;
@@ -11,18 +10,25 @@ async function sendVerificationEmail(email, username, token) {
   `;
 
   if (process.env.NODE_ENV === 'production') {
-    const defaultClient = Brevo.ApiClient.instance;
-    defaultClient.authentications['api-key'].apiKey = process.env.BREVO_API_KEY;
-    
-    const apiInstance = new Brevo.TransactionalEmailsApi();
-    const sendSmtpEmail = new Brevo.SendSmtpEmail();
-    
-    sendSmtpEmail.sender = { email: 'pmontesm@gamil.com', name: 'VTT' };
-    sendSmtpEmail.to = [{ email }];
-    sendSmtpEmail.subject = '✅ Verifica tu cuenta en VTT';
-    sendSmtpEmail.htmlContent = html;
-    
-    await apiInstance.sendTransacEmail(sendSmtpEmail);
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { email: process.env.BREVO_SENDER_EMAIL, name: 'VTT' },
+        to: [{ email }],
+        subject: '✅ Verifica tu cuenta en VTT',
+        htmlContent: html
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(JSON.stringify(error));
+    }
   } else {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
