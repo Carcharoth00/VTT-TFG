@@ -25,6 +25,8 @@ async function initDatabase() {
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token VARCHAR(100) DEFAULT NULL`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS verified TINYINT(1) DEFAULT 0`,
       `ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_token VARCHAR(100) DEFAULT NULL`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(100) DEFAULT NULL`,
+      `ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires DATETIME DEFAULT NULL`,
       `CREATE TABLE IF NOT EXISTS game_library (
     id INT AUTO_INCREMENT PRIMARY KEY,
     game_id INT NOT NULL,

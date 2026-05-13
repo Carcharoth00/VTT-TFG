@@ -6,6 +6,8 @@ import { Tabletop } from './pages/tabletop/tabletop';
 import { authGuard } from './guards/auth.guard';
 import { JoinComponent } from './pages/join/join';
 import { VerifyComponent } from './pages/verify/verify';
+import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password';
+import { ResetPasswordComponent } from './pages/reset-password/reset-password';
 
 export const routes: Routes = [
   {
@@ -38,5 +40,13 @@ export const routes: Routes = [
   {
     path: 'verify/:token',
     component: VerifyComponent
-  }
+  },
+  { 
+    path: 'forgot-password', 
+    component: ForgotPasswordComponent 
+  },
+  { 
+    path: 'reset-password/:token', 
+    component: ResetPasswordComponent 
+  },
 ];

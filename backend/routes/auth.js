@@ -1,14 +1,14 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const User = require('../models/User');
 const { verifyToken } = require('../middleware/auth');
+const { sendVerificationEmail, sendResetPasswordEmail } = require('../services/email.service');
 
 const router = express.Router();
 
 // ========== REGISTRO ==========
 // POST /api/auth/register
-const { sendVerificationEmail } = require('../services/email.service');
-const crypto = require('crypto');
 
 router.post('/register', async (req, res) => {
   try {
@@ -167,6 +167,56 @@ router.post('/verify', verifyToken, (req, res) => {
     valid: true,
     user: req.user
   });
+});
+
+// ========== OLVIDÉ MI CONTRASEÑA ==========
+// POST /api/auth/forgot-password
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findByEmail(email);
+    
+    // Siempre responder igual para no revelar si el email existe
+    if (!user) {
+      return res.json({ message: 'Si el email existe, recibirás un enlace.' });
+    }
+
+    const token = require('crypto').randomBytes(32).toString('hex');
+    const expires = new Date(Date.now() + 3600000); // 1 hora
+    
+    await User.setResetToken(email, token, expires);
+    await sendResetPasswordEmail(email, user.username, token);
+    
+    res.json({ message: 'Si el email existe, recibirás un enlace.' });
+  } catch (error) {
+    console.error('Error forgot-password:', error);
+    res.status(500).json({ error: 'Error al procesar la solicitud' });
+  }
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+    }
+
+    const user = await User.findByResetToken(token);
+    if (!user) {
+      return res.status(400).json({ error: 'Token inválido o expirado' });
+    }
+
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await User.resetPassword(user.id, hashedPassword);
+    
+    res.json({ message: 'Contraseña restablecida correctamente' });
+  } catch (error) {
+    console.error('Error reset-password:', error);
+    res.status(500).json({ error: 'Error al restablecer la contraseña' });
+  }
 });
 
 module.exports = router;

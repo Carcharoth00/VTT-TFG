@@ -45,5 +45,45 @@ async function sendVerificationEmail(email, username, token) {
     });
   }
 }
+async function sendResetPasswordEmail(email, username, token) {
+  const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+  const html = `
+    <h2>Restablecer contraseña - VTT</h2>
+    <p>Hola ${username}, recibimos una solicitud para restablecer tu contraseña.</p>
+    <a href="${resetUrl}" style="background:#3b82f6;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;display:inline-block;margin:16px 0;">Restablecer contraseña</a>
+    <p>Si no solicitaste esto, ignora este email. El enlace expira en 1 hora.</p>
+  `;
 
-module.exports = { sendVerificationEmail };
+  if (process.env.NODE_ENV === 'production') {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { email: process.env.BREVO_SENDER_EMAIL, name: 'VTT' },
+        to: [{ email }],
+        subject: '🔑 Restablecer contraseña - VTT',
+        htmlContent: html
+      })
+    });
+    if (!response.ok) throw new Error(await response.text());
+  } else {
+    const nodemailer = require('nodemailer');
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASSWORD }
+    });
+    await transporter.sendMail({
+      from: `"VTT" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: '🔑 Restablecer contraseña - VTT',
+      html
+    });
+  }
+}
+
+
+module.exports = { sendVerificationEmail, sendResetPasswordEmail };

@@ -81,6 +81,28 @@ class User {
       [id]
     );
   }
+
+  static async setResetToken(email, token, expires) {
+    await pool.execute(
+      'UPDATE users SET reset_token = ?, reset_token_expires = ? WHERE email = ?',
+      [token, expires, email]
+    );
+  }
+
+  static async findByResetToken(token) {
+    const [rows] = await pool.execute(
+      'SELECT * FROM users WHERE reset_token = ? AND reset_token_expires > NOW()',
+      [token]
+    );
+    return rows[0] || null;
+  }
+
+  static async resetPassword(id, hashedPassword) {
+    await pool.execute(
+      'UPDATE users SET password = ?, reset_token = NULL, reset_token_expires = NULL WHERE id = ?',
+      [hashedPassword, id]
+    );
+  }
 }
 
 module.exports = User;
