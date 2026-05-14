@@ -187,7 +187,25 @@ function setupSocketHandlers(io) {
       }
       console.log(`Socket desconectado: ${socket.id}`);
     });
+
+    socket.on('toggle-lock', async ({ roomId, tokenId, locked }) => {
+      const room = rooms.get(roomId);
+      if (room) {
+        const token = room.tokens.find(t => t.id === tokenId);
+        if (token) {
+          token.locked = locked;
+          try {
+            await Token.toggleLock(tokenId, locked);
+          } catch (error) {
+            console.error('Error bloqueando token:', error);
+          }
+        }
+        io.to(roomId).emit('token-locked', { tokenId, locked });
+      }
+    });
   });
+
+
 }
 
 module.exports = { setupSocketHandlers };

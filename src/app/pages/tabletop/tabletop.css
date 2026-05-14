@@ -485,37 +485,6 @@ html {
   font-size: 1.1rem;
 }
 
-.btn-remove {
-  position: absolute;
-  top: -10px;
-  right: -10px;
-  width: 24px;
-  height: 24px;
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  color: white;
-  border: 2px solid white;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: bold;
-  display: none;
-  z-index: 20;
-  transition: all 0.2s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
-}
-
-.btn-remove:hover {
-  transform: scale(1.2);
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-  box-shadow: 0 4px 10px rgba(239, 68, 68, 0.6);
-}
-
-.token:hover .btn-remove {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* ========== SCROLLBAR PERSONALIZADO ========== */
 .control-panel::-webkit-scrollbar,
 .tabletop-main::-webkit-scrollbar,
@@ -1164,4 +1133,73 @@ html {
 
 .btn-role-toggle:hover {
   opacity: 1;
+}
+
+.token-locked {
+  cursor: not-allowed !important;
+  opacity: 0.8;
+  border-color: rgba(239, 68, 68, 0.5) !important;
+}
+
+.token-wrapper {
+  position: absolute;
+  cursor: grab;
+}
+
+.token-controls {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.25rem;
+  z-index: 100;
+  margin-bottom: 4px;
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.token-ctrl-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(30, 30, 46, 0.95);
+  color: white;
+  cursor: pointer;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  transition: background 0.15s;
+}
+
+.token {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: border-color 0.2s;
+}
+
+.token-locked {
+  cursor: not-allowed !important;
+  border-color: rgba(239, 68, 68, 0.5) !important;
 }

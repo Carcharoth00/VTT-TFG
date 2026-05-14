@@ -15,10 +15,10 @@ class Token {
   static async create(tokenData) {
     const { game_id, map_id = null, x, y, color, label, image = null, name = null, character_id = null } = tokenData;
     const [result] = await pool.execute(
-      'INSERT INTO tokens (game_id, map_id, x, y, color, label, image, name, character_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [game_id, map_id, x, y, color, label, image, name, character_id]
+      'INSERT INTO tokens (game_id, map_id, x, y, color, label, image, name, character_id, locked) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [game_id, map_id, x, y, color, label, image, name, character_id, false]
     );
-    return { id: result.insertId, game_id, map_id, x, y, color, label, image, name, character_id };
+    return { id: result.insertId, game_id, map_id, x, y, color, label, image, name, character_id, locked: false };
   }
 
   // Actualizar posición
@@ -37,6 +37,13 @@ class Token {
     );
   }
 
+  //Bloquear el token
+  static async toggleLock(tokenId, locked) {
+  await pool.execute(
+    'UPDATE tokens SET locked = ? WHERE id = ?',
+    [locked ? 1 : 0, tokenId]
+  );
+}
 
 }
 

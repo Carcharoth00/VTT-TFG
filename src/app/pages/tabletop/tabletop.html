@@ -106,13 +106,24 @@
         <div class="grid-cell" *ngFor="let i of getGridCells()"></div>
       </div>
 
-      <div class="token" *ngFor="let token of tokens; trackBy: trackByTokenId" cdkDrag
+      <div class="token-wrapper" *ngFor="let token of tokens; trackBy: trackByTokenId" cdkDrag
+        [cdkDragDisabled]="token.locked"
         [cdkDragFreeDragPosition]="{x: token.x * getScaledGridSize(), y: token.y * getScaledGridSize()}"
         (cdkDragEnded)="onTokenDragEnded($event, token)" [style.width.px]="getScaledGridSize()"
-        [style.height.px]="getScaledGridSize()" [style.backgroundColor]="token.image ? 'transparent' : token.color">
-        <img *ngIf="token.image" [src]="token.image" class="token-image" alt="token" />
-        <span class="token-label" *ngIf="!token.image">{{ token.label || token.name || token.id }}</span>
-        <button (click)="removeToken(token.id)" class="btn-remove" title="Eliminar token">×</button>
+        [style.height.px]="getScaledGridSize()">
+
+        <div class="token-controls" *ngIf="activeTokenMenu === token.id" (click)="$event.stopPropagation()">
+          <button *ngIf="isGM" (click)="toggleTokenLock(token)" class="token-ctrl-btn">
+            {{ token.locked ? '🔒' : '🔓' }}
+          </button>
+          <button (click)="removeToken(token.id)" class="token-ctrl-btn token-ctrl-delete">×</button>
+        </div>
+
+        <div class="token" [style.backgroundColor]="token.image ? 'transparent' : token.color"
+          [class.token-locked]="token.locked" (click)="toggleTokenMenu(token.id, $event)">
+          <img *ngIf="token.image" [src]="token.image" class="token-image" alt="token" />
+          <span class="token-label" *ngIf="!token.image">{{ token.label || token.name || token.id }}</span>
+        </div>
       </div>
     </div>
   </main>

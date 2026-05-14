@@ -51,6 +51,7 @@ export class Tabletop implements OnInit, OnDestroy {
   newTokenName: string = '';
   newTokenColor: string = '#FF0000';
   selectedCharacterId: number | null = null;
+  activeTokenMenu: number | null = null;
 
   // Socket.IO
   private socket!: Socket;
@@ -87,6 +88,10 @@ export class Tabletop implements OnInit, OnDestroy {
 
   ngOnInit() {
     window.addEventListener('keydown', this.handleKeyboard);
+    document.addEventListener('click', () => {
+      this.activeTokenMenu = null;
+      this.cdr.detectChanges();
+    });
     this.authService.currentUser$.subscribe(user => {
       if (user && !this.isConnected) {
         this.username = user.username;
@@ -254,6 +259,14 @@ export class Tabletop implements OnInit, OnDestroy {
     this.socket.on('users-updated', (users: { username: string, userId: number, role: string }[]) => {
       this.connectedUsers = users.map(u => ({ ...u, role: u.role || 'player' }));
       this.cdr.markForCheck();
+    });
+
+    this.socket.on('token-locked', (data: { tokenId: number, locked: boolean }) => {
+      const token = this.tokens.find(t => t.id === data.tokenId);
+      if (token) {
+        token.locked = data.locked;
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -483,6 +496,12 @@ export class Tabletop implements OnInit, OnDestroy {
     if (this.isConnected) {
       this.socket.emit('remove-token', { roomId: this.roomId, tokenId: id });
     }
+  }
+
+  toggleTokenMenu(tokenId: number, event: MouseEvent) {
+    event.stopPropagation();
+    this.activeTokenMenu = this.activeTokenMenu === tokenId ? null : tokenId;
+    this.cdr.detectChanges();
   }
 
   // CDK Drag Drop Event
@@ -795,6 +814,12 @@ export class Tabletop implements OnInit, OnDestroy {
       },
       error: () => console.error('Error cambiando rol')
     });
+  }
+
+  toggleTokenLock(token: Token) {
+    if (!this.isGM) return;
+    const locked = !token.locked;
+    this.socket.emit('toggle-lock', { roomId: this.roomId, tokenId: token.id, locked });
   }
 
 }
