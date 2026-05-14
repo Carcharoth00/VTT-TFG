@@ -23,6 +23,7 @@ html {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   color: #e0e0e0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  position: relative;
 }
 
 /* ========== PANEL DE CONTROL ========== */
@@ -1203,3 +1204,23 @@ html {
   cursor: not-allowed !important;
   border-color: rgba(239, 68, 68, 0.5) !important;
 }
+
+.panel-toggle {
+  position: relative;
+  width: 20px;
+  height: 60px;
+  align-self: center;
+  background: rgba(59,130,246,0.3);
+  border: none;
+  color: white;
+  cursor: pointer;
+  z-index: 50;
+  font-size: 0.7rem;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.panel-toggle:hover { background: rgba(59,130,246,0.6); }
+
+.left-toggle { border-radius: 0 6px 6px 0; }
+.right-toggle { border-radius: 6px 0 0 6px; }

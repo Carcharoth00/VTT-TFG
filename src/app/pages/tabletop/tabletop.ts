@@ -63,6 +63,8 @@ export class Tabletop implements OnInit, OnDestroy {
   activePanel: 'chat' | 'characters' | 'notes' | 'library' = 'chat';
   chatMessages: ChatMessage[] = [];
   newMessage: string = '';
+  showLeftPanel = true;
+  showRightPanel = true;
 
   //Map
   maps: GameMap[] = [];

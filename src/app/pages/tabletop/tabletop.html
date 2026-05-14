@@ -1,5 +1,5 @@
 <div class="tabletop-container">
-  <aside class="control-panel">
+  <aside class="control-panel" *ngIf="showLeftPanel">
     <div class="header-controls">
       <h2>VTT - Virtual Tabletop</h2>
     </div>
@@ -96,6 +96,10 @@
     </div>
   </aside>
 
+  <button class="panel-toggle left-toggle" (click)="showLeftPanel = !showLeftPanel">
+    {{ showLeftPanel ? '◀' : '▶' }}
+  </button>
+
   <main #tabletopMain class="tabletop-main">
     <div #gridWrapper class="grid-wrapper" [style.width.px]="gridColumns * gridSize * zoomLevel"
       [style.height.px]="gridRows * gridSize * zoomLevel"
@@ -128,7 +132,11 @@
     </div>
   </main>
 
-  <aside class="right-panel">
+  <button class="panel-toggle right-toggle" (click)="showRightPanel = !showRightPanel">
+    {{ showRightPanel ? '▶' : '◀' }}
+  </button>
+
+  <aside class="right-panel" *ngIf="showRightPanel">
     <div class="panel-tabs">
       <button (click)="activePanel = 'chat'" [class.active]="activePanel === 'chat'">💬 Chat</button>
       <button (click)="activePanel = 'characters'" [class.active]="activePanel === 'characters'">📋 Ficha</button>
