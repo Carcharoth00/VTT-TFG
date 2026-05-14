@@ -222,8 +222,12 @@ export class PixiCanvasService {
         }
 
         // Click
-        container.on('pointerdown', (e) => {
-            if (!e.altKey) this.onTokenClick?.(token.id);
+        container.on('pointerdown', (e: PIXI.FederatedPointerEvent) => {
+            if (e.altKey) return;
+            e.stopPropagation();
+            setTimeout(() => {
+                this.onTokenClick?.(token.id);
+            }, 10);
         });
 
         this.tokensContainer.addChild(container);
@@ -308,5 +312,13 @@ export class PixiCanvasService {
                 container.y = y * this.gridSize;
             }
         });
+    }
+
+    getScale(): number {
+        return this.worldContainer.scale.x;
+    }
+
+    getWorldPosition(): { x: number, y: number } {
+        return { x: this.worldContainer.x, y: this.worldContainer.y };
     }
 }

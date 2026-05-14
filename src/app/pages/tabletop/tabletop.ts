@@ -60,6 +60,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   newTokenColor: string = '#FF0000';
   selectedCharacterId: number | null = null;
   activeTokenMenu: number | null = null;
+  tokenMenuPosition = { x: 0, y: 0 };
 
   // Socket.IO
   private socket!: Socket;
@@ -115,7 +116,17 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     };
 
     this.pixiService.onTokenClick = (tokenId) => {
-      this.activeTokenMenu = this.activeTokenMenu === tokenId ? null : tokenId;
+      if (this.activeTokenMenu === tokenId) {
+        this.activeTokenMenu = null;
+      } else {
+        this.activeTokenMenu = tokenId;
+        const token = this.tokens.find(t => t.id === tokenId);
+        if (token) {
+          const pos = this.getTokenScreenPosition(token);
+          this.tokenMenuPosition = pos;
+        }
+      }
+      this.cdr.detectChanges();
     };
 
     // Centrar
@@ -127,9 +138,14 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit() {
     window.addEventListener('keydown', this.handleKeyboard);
-    document.addEventListener('click', () => {
-      this.activeTokenMenu = null;
-      this.cdr.detectChanges();
+    document.addEventListener('click', (e) => {
+      const menu = document.querySelector('.token-context-menu');
+      const canvas = document.querySelector('.pixi-canvas');
+      if (canvas && canvas.contains(e.target as Node)) return;
+      if (menu && !menu.contains(e.target as Node)) {
+        this.activeTokenMenu = null;
+        this.cdr.detectChanges();
+      }
     });
     this.authService.currentUser$.subscribe(user => {
       if (user && !this.isConnected) {
@@ -393,7 +409,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   }
 
   // ========== GRID & ZOOM ==========
-  updateGridDimensions() {
+  /* updateGridDimensions() {
     console.log(`Grid actualizado: ${this.gridColumns}x${this.gridRows}, tamaño celda: ${this.gridSize}px`);
 
     if (this.isConnected) {
@@ -404,7 +420,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       };
       this.socket.emit('update-grid', { roomId: this.roomId, config });
     }
-  }
+  } */
 
   // ========== BACKGROUND IMAGE ==========
 
@@ -464,6 +480,15 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   }
 
   // ========== TOKENS (CDK Drag & Drop) ==========
+  getTokenScreenPosition(token: Token): { x: number, y: number } {
+    const scale = this.pixiService.getScale();
+    const worldPos = this.pixiService.getWorldPosition();
+
+    return {
+      x: worldPos.x + token.x * this.gridSize * scale,
+      y: worldPos.y + token.y * this.gridSize * scale
+    };
+  }
 
   addToken() {
     this.newTokenImage = null;
@@ -529,6 +554,20 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     event.stopPropagation();
     this.activeTokenMenu = this.activeTokenMenu === tokenId ? null : tokenId;
     this.cdr.detectChanges();
+  }
+
+  getTokenById(tokenId: number): Token | undefined {
+    return this.tokens.find(t => t.id === tokenId);
+  }
+
+  toggleTokenLockById(tokenId: number) {
+    const token = this.tokens.find(t => t.id === tokenId);
+    if (token) this.toggleTokenLock(token);
+  }
+
+  toggleConditionById(tokenId: number, conditionId: string, event: MouseEvent) {
+    const token = this.tokens.find(t => t.id === tokenId);
+    if (token) this.toggleCondition(token, conditionId, event);
   }
 
   // CDK Drag Drop Event
