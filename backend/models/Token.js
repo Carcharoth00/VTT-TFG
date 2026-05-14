@@ -39,11 +39,19 @@ class Token {
 
   //Bloquear el token
   static async toggleLock(tokenId, locked) {
-  await pool.execute(
-    'UPDATE tokens SET locked = ? WHERE id = ?',
-    [locked ? 1 : 0, tokenId]
-  );
-}
+    await pool.execute(
+      'UPDATE tokens SET locked = ? WHERE id = ?',
+      [locked ? 1 : 0, tokenId]
+    );
+  }
+
+  //Condiciones del token
+  static async updateConditions(tokenId, conditions) {
+    await pool.execute(
+      'UPDATE tokens SET conditions = ? WHERE id = ?',
+      [JSON.stringify(conditions), tokenId]
+    );
+  }
 
 }
 

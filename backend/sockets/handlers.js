@@ -203,8 +203,61 @@ function setupSocketHandlers(io) {
         io.to(roomId).emit('token-locked', { tokenId, locked });
       }
     });
-  });
 
+    socket.on('update-background', async ({ roomId, mapId }) => {
+      const room = rooms.get(roomId);
+      if (room) {
+        if (mapId) {
+          room.backgroundImage = mapId;
+        } else {
+          room.backgroundImage = null;
+          // Desactivar mapa en BD
+          try {
+            await require('../config/database').pool.execute(
+              'UPDATE maps SET is_active = 0 WHERE game_id = ?',
+              [roomId]
+            );
+          } catch (e) {
+            console.error('Error desactivando mapa:', e);
+          }
+        }
+        io.to(roomId).emit('background-updated', mapId ? { mapId } : null);
+      }
+    });
+
+    socket.on('update-grid', ({ roomId, config }) => {
+      const room = rooms.get(roomId);
+      if (room) {
+        room.gridConfig = config;
+        socket.to(roomId).emit('grid-updated', config);
+      }
+    });
+
+    socket.on('update-zoom', ({ roomId, zoom }) => {
+      const room = rooms.get(roomId);
+      if (room) {
+        room.zoomLevel = zoom;
+        socket.to(roomId).emit('zoom-updated', zoom);
+      }
+    });
+
+    socket.on('update-conditions', async ({ roomId, tokenId, conditions }) => {
+      const room = rooms.get(roomId);
+      if (room) {
+        const token = room.tokens.find(t => t.id === tokenId);
+        if (token) {
+          token.conditions = conditions;
+          try {
+            await Token.updateConditions(tokenId, conditions);
+          } catch (error) {
+            console.error('Error actualizando condiciones:', error);
+          }
+        }
+        io.to(roomId).emit('token-conditions-updated', { tokenId, conditions });
+      }
+    });
+
+  });
 
 }
 

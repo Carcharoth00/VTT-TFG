@@ -117,16 +117,30 @@
         [style.height.px]="getScaledGridSize()">
 
         <div class="token-controls" *ngIf="activeTokenMenu === token.id" (click)="$event.stopPropagation()">
-          <button *ngIf="isGM" (click)="toggleTokenLock(token)" class="token-ctrl-btn">
-            {{ token.locked ? '🔒' : '🔓' }}
-          </button>
-          <button (click)="removeToken(token.id)" class="token-ctrl-btn token-ctrl-delete">×</button>
+          <div class="token-controls-top">
+            <button *ngIf="isGM" (click)="toggleTokenLock(token)" class="token-ctrl-btn">
+              {{ token.locked ? '🔒' : '🔓' }}
+            </button>
+            <button (click)="removeToken(token.id)" class="token-ctrl-btn token-ctrl-delete">×</button>
+          </div>
+          <div class="token-controls-bottom">
+            <button *ngFor="let cond of CONDITIONS" (click)="toggleCondition(token, cond.id, $event)"
+              class="token-ctrl-btn" [class.condition-active]="token.conditions?.includes(cond.id)"
+              [title]="cond.label">
+              {{ cond.icon }}
+            </button>
+          </div>
         </div>
 
         <div class="token" [style.backgroundColor]="token.image ? 'transparent' : token.color"
           [class.token-locked]="token.locked" (click)="toggleTokenMenu(token.id, $event)">
           <img *ngIf="token.image" [src]="token.image" class="token-image" alt="token" />
           <span class="token-label" *ngIf="!token.image">{{ token.label || token.name || token.id }}</span>
+
+          <!-- Iconos de condiciones activas -->
+          <div class="token-condition-icons" *ngIf="token.conditions?.length">
+            <span *ngFor="let c of token.conditions" class="condition-icon">{{ getConditionIcon(c) }}</span>
+          </div>
         </div>
       </div>
     </div>

@@ -270,6 +270,14 @@ export class Tabletop implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       }
     });
+
+    this.socket.on('token-conditions-updated', (data: { tokenId: number, conditions: string[] }) => {
+      const token = this.tokens.find(t => t.id === data.tokenId);
+      if (token) {
+        token.conditions = data.conditions;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   joinRoom() {
@@ -555,6 +563,33 @@ export class Tabletop implements OnInit, OnDestroy {
   // Generar array para la cuadrícula
   getGridCells(): number[] {
     return Array(this.gridColumns * this.gridRows).fill(0).map((_, i) => i);
+  }
+
+  readonly CONDITIONS = [
+    { id: 'dead', icon: '💀', label: 'Muerto' },
+    { id: 'unconscious', icon: '😴', label: 'Inconsciente' },
+    { id: 'poisoned', icon: '🤢', label: 'Envenenado' },
+    { id: 'burning', icon: '🔥', label: 'En llamas' },
+    { id: 'stunned', icon: '⚡', label: 'Aturdido' },
+    { id: 'protected', icon: '🛡️', label: 'Protegido' },
+  ];
+
+  toggleCondition(token: Token, conditionId: string, event: MouseEvent) {
+    event.stopPropagation();
+    const conditions: string[] = token.conditions ? [...token.conditions] : [];
+    const index = conditions.indexOf(conditionId);
+    if (index === -1) {
+      conditions.push(conditionId);
+    } else {
+      conditions.splice(index, 1);
+    }
+    token.conditions = conditions;
+    this.socket.emit('update-conditions', { roomId: this.roomId, tokenId: token.id, conditions });
+    this.cdr.detectChanges();
+  }
+
+  getConditionIcon(conditionId: string): string {
+    return this.CONDITIONS.find(c => c.id === conditionId)?.icon || '';
   }
 
   // ========== CHAT ==========

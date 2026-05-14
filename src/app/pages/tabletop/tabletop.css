@@ -1153,10 +1153,25 @@ html {
   left: 50%;
   transform: translateX(-50%);
   display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 0.25rem;
   z-index: 100;
   margin-bottom: 4px;
   animation: fadeIn 0.15s ease;
+}
+
+.token-controls-top {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.token-controls-bottom {
+  display: flex;
+  gap: 0.2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 140px;
 }
 
 @keyframes fadeIn {
@@ -1210,7 +1225,7 @@ html {
   width: 20px;
   height: 60px;
   align-self: center;
-  background: rgba(59,130,246,0.3);
+  background: rgba(59, 130, 246, 0.3);
   border: none;
   color: white;
   cursor: pointer;
@@ -1220,7 +1235,39 @@ html {
   flex-shrink: 0;
 }
 
-.panel-toggle:hover { background: rgba(59,130,246,0.6); }
+.panel-toggle:hover {
+  background: rgba(59, 130, 246, 0.6);
+}
 
-.left-toggle { border-radius: 0 6px 6px 0; }
-.right-toggle { border-radius: 6px 0 0 6px; }
+.left-toggle {
+  border-radius: 0 6px 6px 0;
+}
+
+.right-toggle {
+  border-radius: 6px 0 0 6px;
+}
+
+.token-conditions-menu {
+  display: flex;
+  gap: 0.2rem;
+  flex-wrap: wrap;
+  max-width: 120px;
+}
+
+.condition-active {
+  background: rgba(59, 130, 246, 0.5) !important;
+}
+
+.token-condition-icons {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+}
+
+.condition-icon {
+  font-size: 0.6rem;
+  line-height: 1;
+}

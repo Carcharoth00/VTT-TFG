@@ -8,6 +8,7 @@ export interface Token {
   name?: string | null;
   character_id?: number | null;
   locked?: boolean;
+  conditions?: string[] | null;
 }
 
 export interface GridConfig {
