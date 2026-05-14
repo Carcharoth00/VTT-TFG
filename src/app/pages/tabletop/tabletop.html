@@ -39,8 +39,8 @@
 
     <div class="control-section">
       <h3>Cuadrícula</h3>
-      <button (click)="showGrid = !showGrid" class="btn-reset" style="margin-bottom: 0.5rem">
-        {{ showGrid ? '👁️ Ocultar grid' : '👁️ Mostrar grid' }}
+      <button (click)="showGrid = !showGrid" class="btn-toggle-grid" [class.active]="showGrid">
+        {{ showGrid ? '👁️ Cuadrícula visible' : '🚫 Cuadrícula oculta' }}
       </button>
       <label>Tamaño celda (px):
         <input type="number" [(ngModel)]="gridSize" (change)="updateGridDimensions()" min="20" max="100">
@@ -121,8 +121,9 @@
         </div>
 
         <div class="token-wrapper" *ngFor="let token of tokens; trackBy: trackByTokenId" cdkDrag
-          [cdkDragDisabled]="token.locked" [cdkDragFreeDragPosition]="{x: token.x * gridSize, y: token.y * gridSize}"
-          (cdkDragEnded)="onTokenDragEnded($event, token)" [style.width.px]="gridSize" [style.height.px]="gridSize">
+          [id]="'token-' + token.id"
+          [cdkDragFreeDragPosition]="{x: token.x * getScaledGridSize(), y: token.y * getScaledGridSize()}"
+          [style.width.px]="getScaledGridSize()" [style.height.px]="getScaledGridSize()">
 
           <div class="token-controls" *ngIf="activeTokenMenu === token.id" (click)="$event.stopPropagation()">
             <div class="token-controls-top">

@@ -233,11 +233,23 @@ function setupSocketHandlers(io) {
       }
     });
 
-    socket.on('update-grid', ({ roomId, config }) => {
+    socket.on('update-grid', async ({ roomId, config }) => {
       const room = rooms.get(roomId);
       if (room) {
         room.gridConfig = config;
         socket.to(roomId).emit('grid-updated', config);
+        // Persistir en BD si hay mapa activo
+        try {
+          const [rows] = await require('../config/database').pool.execute(
+            'SELECT id FROM maps WHERE game_id = ? AND is_active = 1',
+            [roomId]
+          );
+          if (rows.length > 0) {
+            await require('../models/Map').updateGridConfig(rows[0].id, config.columns, config.rows, config.size);
+          }
+        } catch (e) {
+          console.error('Error guardando grid config:', e);
+        }
       }
     });
 

@@ -14,6 +14,7 @@ import { GameService, Game } from '../../services/game.service';
 import { NotesComponent } from '../notes/notes';
 import { Character, CharacterService } from '../../services/character.service';
 import { LibraryItem, LibraryService } from '../../services/library.service';
+import { AfterViewInit } from '@angular/core';
 
 @Component({
   selector: 'app-tabletop',
@@ -22,7 +23,7 @@ import { LibraryItem, LibraryService } from '../../services/library.service';
   templateUrl: './tabletop.html',
   styleUrl: './tabletop.css',
 })
-export class Tabletop implements OnInit, OnDestroy {
+export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('canvasViewport') canvasViewport!: ElementRef;
 
   //Usuarios
@@ -95,6 +96,15 @@ export class Tabletop implements OnInit, OnDestroy {
     console.log('✅ Tabletop constructor - Router inyectado:', !!this.router);
   }
 
+  ngAfterViewInit() {
+    const main = document.querySelector('.tabletop-main') as HTMLElement;
+    if (main) {
+      this.panX = (main.clientWidth - this.gridColumns * this.gridSize) / 2;
+      this.panY = (main.clientHeight - this.gridRows * this.gridSize) / 2;
+      this.cdr.detectChanges();
+    }
+  }
+
   ngOnInit() {
     window.addEventListener('keydown', this.handleKeyboard);
     document.addEventListener('click', () => {
@@ -134,6 +144,9 @@ export class Tabletop implements OnInit, OnDestroy {
             next: (response) => {
               if (response.map) {
                 this.activeMapId = response.map.id;
+                this.gridColumns = response.map.grid_cols || 20;
+                this.gridRows = response.map.grid_rows || 15;
+                this.gridSize = response.map.grid_size || 50;
                 this.mapService.getMapImage(response.map.id).subscribe({
                   next: (img) => {
                     this.backgroundImage = img.image;
@@ -246,19 +259,6 @@ export class Tabletop implements OnInit, OnDestroy {
 
     // ================ Chat events ===============
     this.socket.on('chat-message', (message: ChatMessage) => {
-      this.chatMessages.push(message);
-      this.cdr.markForCheck();
-      this.scrollChatToBottom();
-    });
-
-    this.socket.on('chat-message', (message: ChatMessage) => {
-      this.chatMessages.push(message);
-      if (this.activePanel !== 'chat') this.unreadMessages++;
-      this.cdr.markForCheck();
-      this.scrollChatToBottom();
-    });
-
-    this.socket.on('dice-rolled', (message: ChatMessage) => {
       this.chatMessages.push(message);
       if (this.activePanel !== 'chat') this.unreadMessages++;
       this.cdr.markForCheck();
@@ -567,18 +567,20 @@ export class Tabletop implements OnInit, OnDestroy {
 
   // CDK Drag Drop Event
   onTokenDragEnded(event: CdkDragEnd, token: Token) {
+    const scaledGridSize = this.getScaledGridSize();
     const distance = event.distance;
-    const deltaX = distance.x / this.zoomLevel;
-    const deltaY = distance.y / this.zoomLevel;
 
-    const currentPixelX = token.x * this.gridSize;
-    const currentPixelY = token.y * this.gridSize;
+    const deltaX = distance.x;
+    const deltaY = distance.y;
+
+    const currentPixelX = token.x * scaledGridSize;
+    const currentPixelY = token.y * scaledGridSize;
 
     const newPixelX = currentPixelX + deltaX;
     const newPixelY = currentPixelY + deltaY;
 
-    let newX = Math.round(newPixelX / this.gridSize);
-    let newY = Math.round(newPixelY / this.gridSize);
+    let newX = Math.round(newPixelX / scaledGridSize);
+    let newY = Math.round(newPixelY / scaledGridSize);
 
     newX = Math.max(0, Math.min(newX, this.gridColumns - 1));
     newY = Math.max(0, Math.min(newY, this.gridRows - 1));

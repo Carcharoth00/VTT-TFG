@@ -225,6 +225,29 @@ html {
   font-size: 0.875rem;
 }
 
+.btn-toggle-grid {
+  width: 100%;
+  padding: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #b0b8c8;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  transition: all 0.2s;
+}
+
+.btn-toggle-grid.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+}
+
+.btn-toggle-grid:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
 /* Mensajes */
 .success {
   color: #10b981;
