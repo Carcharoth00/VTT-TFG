@@ -37,7 +37,7 @@
     </div>
 
 
-    <div class="control-section">
+    <!-- <div class="control-section">
       <h3>Cuadrícula</h3>
       <button (click)="showGrid = !showGrid" class="btn-toggle-grid" [class.active]="showGrid">
         {{ showGrid ? '👁️ Cuadrícula visible' : '🚫 Cuadrícula oculta' }}
@@ -51,9 +51,9 @@
       <label>Filas:
         <input type="number" [(ngModel)]="gridRows" (change)="updateGridDimensions()" min="5" max="50">
       </label>
-    </div>
+    </div> -->
 
-    <div class="control-section">
+    <!-- <div class="control-section">
       <h3>Zoom</h3>
       <div class="zoom-controls">
         <button (click)="zoomOut()" class="btn-zoom">−</button>
@@ -63,7 +63,7 @@
         <button (click)="zoomIn()" class="btn-zoom">+</button>
       </div>
       <button (click)="resetZoom()" class="btn-reset">Resetear Zoom</button>
-    </div>
+    </div> -->
 
     <div class="control-section">
       <h3>Fondo del Tablero</h3>
@@ -105,53 +105,8 @@
     {{ showLeftPanel ? '◀' : '▶' }}
   </button>
 
-  <main #tabletopMain class="tabletop-main" (wheel)="onWheel($event)" (mousedown)="onCanvasMouseDown($event)"
-    (mousemove)="onCanvasMouseMove($event)" (mouseup)="onCanvasMouseUp($event)" (mouseleave)="onCanvasMouseUp($event)">
-
-    <div class="canvas-viewport" #canvasViewport
-      [style.transform]="'translate(' + panX + 'px, ' + panY + 'px) scale(' + zoomLevel + ')'">
-
-      <div #gridWrapper class="grid-wrapper" [style.width.px]="gridColumns * gridSize"
-        [style.height.px]="gridRows * gridSize"
-        [style.backgroundImage]="backgroundImage ? 'url(' + backgroundImage + ')' : 'none'">
-
-        <div class="grid" *ngIf="showGrid" [style.gridTemplateColumns]="'repeat(' + gridColumns + ', 1fr)'"
-          [style.gridTemplateRows]="'repeat(' + gridRows + ', 1fr)'">
-          <div class="grid-cell" *ngFor="let i of getGridCells()"></div>
-        </div>
-
-        <div class="token-wrapper" *ngFor="let token of tokens; trackBy: trackByTokenId" cdkDrag
-          [id]="'token-' + token.id"
-          [cdkDragFreeDragPosition]="{x: token.x * getScaledGridSize(), y: token.y * getScaledGridSize()}"
-          [style.width.px]="getScaledGridSize()" [style.height.px]="getScaledGridSize()">
-
-          <div class="token-controls" *ngIf="activeTokenMenu === token.id" (click)="$event.stopPropagation()">
-            <div class="token-controls-top">
-              <button *ngIf="isGM" (click)="toggleTokenLock(token)" class="token-ctrl-btn">
-                {{ token.locked ? '🔒' : '🔓' }}
-              </button>
-              <button (click)="removeToken(token.id)" class="token-ctrl-btn token-ctrl-delete">×</button>
-            </div>
-            <div class="token-controls-bottom">
-              <button *ngFor="let cond of CONDITIONS" (click)="toggleCondition(token, cond.id, $event)"
-                class="token-ctrl-btn" [class.condition-active]="token.conditions?.includes(cond.id)"
-                [title]="cond.label">
-                {{ cond.icon }}
-              </button>
-            </div>
-          </div>
-
-          <div class="token" [style.backgroundColor]="token.image ? 'transparent' : token.color"
-            [class.token-locked]="token.locked" (click)="toggleTokenMenu(token.id, $event)">
-            <img *ngIf="token.image" [src]="token.image" class="token-image" alt="token" />
-            <span class="token-label" *ngIf="!token.image">{{ token.label || token.name || token.id }}</span>
-            <div class="token-condition-icons" *ngIf="token.conditions?.length">
-              <span *ngFor="let c of token.conditions" class="condition-icon">{{ getConditionIcon(c) }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+  <main #tabletopMain class="tabletop-main">
+    <canvas #pixiCanvas class="pixi-canvas"></canvas>
   </main>
 
   <button class="panel-toggle right-toggle" (click)="showRightPanel = !showRightPanel">

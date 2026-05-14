@@ -15,6 +15,7 @@ import { NotesComponent } from '../notes/notes';
 import { Character, CharacterService } from '../../services/character.service';
 import { LibraryItem, LibraryService } from '../../services/library.service';
 import { AfterViewInit } from '@angular/core';
+import { PixiCanvasService } from '../../services/pixi-canvas.service';
 
 @Component({
   selector: 'app-tabletop',
@@ -24,7 +25,7 @@ import { AfterViewInit } from '@angular/core';
   styleUrl: './tabletop.css',
 })
 export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
-  @ViewChild('canvasViewport') canvasViewport!: ElementRef;
+  @ViewChild('pixiCanvas') pixiCanvas!: ElementRef<HTMLCanvasElement>;
 
   //Usuarios
   connectedUsers: { username: string, userId: number, role: string }[] = [];
@@ -91,18 +92,37 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     private mapService: MapService,
     private gameService: GameService,
     private characterService: CharacterService,
-    private libraryService: LibraryService
+    private libraryService: LibraryService,
+    private pixiService: PixiCanvasService
   ) {
     console.log('✅ Tabletop constructor - Router inyectado:', !!this.router);
   }
 
-  ngAfterViewInit() {
-    const main = document.querySelector('.tabletop-main') as HTMLElement;
-    if (main) {
-      this.panX = (main.clientWidth - this.gridColumns * this.gridSize) / 2;
-      this.panY = (main.clientHeight - this.gridRows * this.gridSize) / 2;
-      this.cdr.detectChanges();
-    }
+  async ngAfterViewInit() {
+    const canvas = this.pixiCanvas.nativeElement;
+    const parent = canvas.parentElement!;
+    await this.pixiService.init(canvas, parent.clientWidth, parent.clientHeight);
+
+    this.pixiService.onTokenMoved = (tokenId, x, y) => {
+      const token = this.tokens.find(t => t.id === tokenId);
+      if (token) {
+        token.x = x;
+        token.y = y;
+      }
+      if (this.isConnected) {
+        this.socket.emit('move-token', { roomId: this.roomId, tokenId, x, y });
+      }
+    };
+
+    this.pixiService.onTokenClick = (tokenId) => {
+      this.activeTokenMenu = this.activeTokenMenu === tokenId ? null : tokenId;
+    };
+
+    // Centrar
+    const viewportWidth = parent.clientWidth;
+    const viewportHeight = parent.clientHeight;
+    this.panX = (viewportWidth - this.gridColumns * this.gridSize) / 2;
+    this.panY = (viewportHeight - this.gridRows * this.gridSize) / 2;
   }
 
   ngOnInit() {
@@ -147,9 +167,12 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
                 this.gridColumns = response.map.grid_cols || 20;
                 this.gridRows = response.map.grid_rows || 15;
                 this.gridSize = response.map.grid_size || 50;
+                this.pixiService.setGridConfig(this.gridColumns, this.gridRows, this.gridSize);
+
                 this.mapService.getMapImage(response.map.id).subscribe({
                   next: (img) => {
                     this.backgroundImage = img.image;
+                    this.pixiService.setBackground(img.image);
                     this.cdr.detectChanges();
                   }
                 });
@@ -165,6 +188,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     if (this.socket) {
       this.socket.disconnect();
       window.removeEventListener('keydown', this.handleKeyboard);
+      this.pixiService.destroy();
     }
   }
 
@@ -206,9 +230,19 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
         this.gridSize = state.gridConfig.size;
         this.gridColumns = state.gridConfig.columns;
         this.gridRows = state.gridConfig.rows;
+        this.pixiService.setGridConfig(this.gridColumns, this.gridRows, this.gridSize);
       }
       this.backgroundImage = state.backgroundImage || null;
       this.chatMessages = state.chatMessages || [];
+
+      // Añadir tokens al canvas
+      this.pixiService.clearTokens();
+      this.tokens.forEach(t => this.pixiService.addToken(t, this.isGM));
+
+      if (this.backgroundImage) {
+        this.pixiService.setBackground(this.backgroundImage);
+      }
+
       this.cdr.markForCheck();
     });
 
@@ -217,6 +251,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       const exists = this.tokens.find(t => t.id === token.id);
       if (!exists) {
         this.tokens.push(token);
+        this.pixiService.addToken(token, this.isGM);
         this.cdr.markForCheck();
       }
     });
@@ -226,12 +261,14 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       if (token) {
         token.x = data.x;
         token.y = data.y;
+        this.pixiService.updateTokenPosition(data.id, data.x, data.y);
         this.cdr.markForCheck();
       }
     });
 
     this.socket.on('token-removed', (tokenId: number) => {
       this.tokens = this.tokens.filter(t => t.id !== tokenId);
+      this.pixiService.removeToken(tokenId);
       this.cdr.markForCheck();
     });
 
@@ -248,11 +285,13 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
         this.mapService.getMapImage(data.mapId).subscribe({
           next: (response) => {
             this.backgroundImage = response.image;
+            this.pixiService.setBackground(response.image);
             this.cdr.detectChanges();
           }
         });
       } else {
         this.backgroundImage = null;
+        this.pixiService.setBackground(null);
         this.cdr.detectChanges();
       }
     });
@@ -354,38 +393,6 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   }
 
   // ========== GRID & ZOOM ==========
-
-  getScaledGridSize(): number {
-    return this.gridSize * this.zoomLevel;
-  }
-
-  zoomIn() {
-    if (this.zoomLevel < 3) {
-      this.zoomLevel += 0.2;
-      this.cdr.markForCheck();
-    }
-  }
-
-  zoomOut() {
-    if (this.zoomLevel > 0.5) {
-      this.zoomLevel -= 0.2;
-      this.cdr.markForCheck();
-    }
-  }
-
-  setZoom(event: any) {
-    const value = parseInt(event.target.value);
-    if (value >= 50 && value <= 300) {
-      this.zoomLevel = value / 100;
-      this.cdr.markForCheck();
-    }
-  }
-
-  resetZoom() {
-    this.zoomLevel = 1;
-    this.cdr.markForCheck();
-  }
-
   updateGridDimensions() {
     console.log(`Grid actualizado: ${this.gridColumns}x${this.gridRows}, tamaño celda: ${this.gridSize}px`);
 
@@ -397,47 +404,6 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       };
       this.socket.emit('update-grid', { roomId: this.roomId, config });
     }
-  }
-
-  onWheel(event: WheelEvent) {
-    event.preventDefault();
-    const delta = event.deltaY > 0 ? -0.1 : 0.1;
-    const newZoom = Math.min(3, Math.max(0.3, Math.round((this.zoomLevel + delta) * 10) / 10));
-
-    const main = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    const mouseX = event.clientX - main.left;
-    const mouseY = event.clientY - main.top;
-
-    // Ajustar pan para que el zoom sea desde el cursor
-    this.panX = mouseX - (mouseX - this.panX) * (newZoom / this.zoomLevel);
-    this.panY = mouseY - (mouseY - this.panY) * (newZoom / this.zoomLevel);
-
-    this.zoomLevel = newZoom;
-    this.cdr.markForCheck();
-  }
-
-  onCanvasMouseDown(event: MouseEvent) {
-    if (event.button === 1 || (event.button === 0 && event.altKey)) {
-      this.isPanning = true;
-      this.lastMouseX = event.clientX;
-      this.lastMouseY = event.clientY;
-      event.preventDefault();
-    }
-  }
-
-  onCanvasMouseMove(event: MouseEvent) {
-    if (!this.isPanning) return;
-    const dx = event.clientX - this.lastMouseX;
-    const dy = event.clientY - this.lastMouseY;
-    this.panX += dx;
-    this.panY += dy;
-    this.lastMouseX = event.clientX;
-    this.lastMouseY = event.clientY;
-    this.cdr.markForCheck();
-  }
-
-  onCanvasMouseUp(event: MouseEvent) {
-    this.isPanning = false;
   }
 
   // ========== BACKGROUND IMAGE ==========
@@ -567,20 +533,20 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
 
   // CDK Drag Drop Event
   onTokenDragEnded(event: CdkDragEnd, token: Token) {
-    const scaledGridSize = this.getScaledGridSize();
     const distance = event.distance;
 
-    const deltaX = distance.x;
-    const deltaY = distance.y;
+    // La distancia viene en coordenadas de pantalla, convertir a coordenadas de canvas
+    const deltaX = distance.x / this.zoomLevel;
+    const deltaY = distance.y / this.zoomLevel;
 
-    const currentPixelX = token.x * scaledGridSize;
-    const currentPixelY = token.y * scaledGridSize;
+    const currentPixelX = token.x * this.gridSize;
+    const currentPixelY = token.y * this.gridSize;
 
     const newPixelX = currentPixelX + deltaX;
     const newPixelY = currentPixelY + deltaY;
 
-    let newX = Math.round(newPixelX / scaledGridSize);
-    let newY = Math.round(newPixelY / scaledGridSize);
+    let newX = Math.round(newPixelX / this.gridSize);
+    let newY = Math.round(newPixelY / this.gridSize);
 
     newX = Math.max(0, Math.min(newX, this.gridColumns - 1));
     newY = Math.max(0, Math.min(newY, this.gridRows - 1));
@@ -858,8 +824,6 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       this.selectedLibraryImage = null;
       this.cdr.detectChanges();
     }
-    if (e.key === '+' && e.ctrlKey) { e.preventDefault(); this.zoomIn(); }
-    if (e.key === '-' && e.ctrlKey) { e.preventDefault(); this.zoomOut(); }
   };
 
   //Compartir partida
