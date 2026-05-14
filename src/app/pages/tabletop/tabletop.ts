@@ -65,6 +65,7 @@ export class Tabletop implements OnInit, OnDestroy {
   newMessage: string = '';
   showLeftPanel = true;
   showRightPanel = true;
+  unreadMessages = 0;
 
   //Map
   maps: GameMap[] = [];
@@ -239,13 +240,28 @@ export class Tabletop implements OnInit, OnDestroy {
       this.cdr.markForCheck();
     });
 
-    // Chat events
+    // ================ Chat events ===============
     this.socket.on('chat-message', (message: ChatMessage) => {
       this.chatMessages.push(message);
       this.cdr.markForCheck();
       this.scrollChatToBottom();
     });
 
+    this.socket.on('chat-message', (message: ChatMessage) => {
+      this.chatMessages.push(message);
+      if (this.activePanel !== 'chat') this.unreadMessages++;
+      this.cdr.markForCheck();
+      this.scrollChatToBottom();
+    });
+
+    this.socket.on('dice-rolled', (message: ChatMessage) => {
+      this.chatMessages.push(message);
+      if (this.activePanel !== 'chat') this.unreadMessages++;
+      this.cdr.markForCheck();
+      this.scrollChatToBottom();
+    });
+
+    // =============== DADOS ================
     this.socket.on('dice-rolled', (message: ChatMessage) => {
       this.chatMessages.push(message);
       this.cdr.markForCheck();

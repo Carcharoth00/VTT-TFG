@@ -85,7 +85,11 @@ function setupSocketHandlers(io) {
       });
 
       socket.to(roomId).emit('system-message', {
-        message: `${username} se ha unido a la sala`
+        id: Date.now().toString(),
+        username: 'Sistema',
+        message: `${username} se ha unido a la sala`,
+        timestamp: new Date(),
+        type: 'system'
       });
       io.to(roomId).emit('users-updated', getRoomUsers(room));
     });
@@ -176,7 +180,11 @@ function setupSocketHandlers(io) {
         if (user) {
           room.users.delete(socket.id);
           io.to(roomId).emit('system-message', {
-            message: `${user.username} se ha desconectado`
+            id: Date.now().toString(),
+            username: 'Sistema',
+            message: `${user.username} se ha desconectado`,
+            timestamp: new Date(),
+            type: 'system'
           });
           if (room.users.size === 0) {
             rooms.delete(roomId);

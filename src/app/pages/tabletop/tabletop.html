@@ -152,7 +152,9 @@
 
   <aside class="right-panel" *ngIf="showRightPanel">
     <div class="panel-tabs">
-      <button (click)="activePanel = 'chat'" [class.active]="activePanel === 'chat'">💬 Chat</button>
+      <button (click)="activePanel = 'chat'; unreadMessages = 0" [class.active]="activePanel === 'chat'">
+        💬 Chat <span *ngIf="unreadMessages > 0" class="badge">{{ unreadMessages }}</span>
+      </button>
       <button (click)="activePanel = 'characters'" [class.active]="activePanel === 'characters'">📋 Ficha</button>
       <button (click)="activePanel = 'notes'" [class.active]="activePanel === 'notes'">📝 Notas</button>
       <button *ngIf="isGM" (click)="activePanel = 'library'" [class.active]="activePanel === 'library'">🗂️

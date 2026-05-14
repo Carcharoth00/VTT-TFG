@@ -513,6 +513,16 @@ html {
   background: #2563eb;
 }
 
+.badge {
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-left: 0.25rem;
+}
+
 /* ========== PANEL DE CHAT ========== */
 .right-panel {
   width: 320px;
