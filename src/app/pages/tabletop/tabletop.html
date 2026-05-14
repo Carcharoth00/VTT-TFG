@@ -39,6 +39,9 @@
 
     <div class="control-section">
       <h3>Cuadrícula</h3>
+      <button (click)="showGrid = !showGrid" class="btn-reset" style="margin-bottom: 0.5rem">
+        {{ showGrid ? '👁️ Ocultar grid' : '👁️ Mostrar grid' }}
+      </button>
       <label>Tamaño celda (px):
         <input type="number" [(ngModel)]="gridSize" (change)="updateGridDimensions()" min="20" max="100">
       </label>
@@ -84,10 +87,12 @@
     <div class="control-section info-section">
       <h3>ℹ️ Instrucciones</h3>
       <ul class="instructions">
-        <li>Arrastra los tokens para moverlos</li>
-        <li>Haz clic en la × para eliminarlos</li>
-        <li>Comparte el ID de sala para jugar con otros</li>
-        <li>Usa Ctrl+Scroll para zoom rápido</li>
+        <li>Rueda del ratón para hacer zoom</li>
+        <li>Alt + arrastrar para mover el mapa</li>
+        <li>Clic en token para ver opciones</li>
+        <li>Arrastra tokens para moverlos</li>
+        <li>Ctrl+/- para zoom rápido</li>
+        <li>Escape para cerrar menús</li>
       </ul>
     </div>
 
@@ -100,46 +105,48 @@
     {{ showLeftPanel ? '◀' : '▶' }}
   </button>
 
-  <main #tabletopMain class="tabletop-main">
-    <div #gridWrapper class="grid-wrapper" [style.width.px]="gridColumns * gridSize * zoomLevel"
-      [style.height.px]="gridRows * gridSize * zoomLevel"
-      [style.backgroundImage]="backgroundImage ? 'url(' + backgroundImage + ')' : 'none'">
+  <main #tabletopMain class="tabletop-main" (wheel)="onWheel($event)" (mousedown)="onCanvasMouseDown($event)"
+    (mousemove)="onCanvasMouseMove($event)" (mouseup)="onCanvasMouseUp($event)" (mouseleave)="onCanvasMouseUp($event)">
 
-      <div class="grid" [style.gridTemplateColumns]="'repeat(' + gridColumns + ', 1fr)'"
-        [style.gridTemplateRows]="'repeat(' + gridRows + ', 1fr)'">
-        <div class="grid-cell" *ngFor="let i of getGridCells()"></div>
-      </div>
+    <div class="canvas-viewport" #canvasViewport
+      [style.transform]="'translate(' + panX + 'px, ' + panY + 'px) scale(' + zoomLevel + ')'">
 
-      <div class="token-wrapper" *ngFor="let token of tokens; trackBy: trackByTokenId" cdkDrag
-        [cdkDragDisabled]="token.locked"
-        [cdkDragFreeDragPosition]="{x: token.x * getScaledGridSize(), y: token.y * getScaledGridSize()}"
-        (cdkDragEnded)="onTokenDragEnded($event, token)" [style.width.px]="getScaledGridSize()"
-        [style.height.px]="getScaledGridSize()">
+      <div #gridWrapper class="grid-wrapper" [style.width.px]="gridColumns * gridSize"
+        [style.height.px]="gridRows * gridSize"
+        [style.backgroundImage]="backgroundImage ? 'url(' + backgroundImage + ')' : 'none'">
 
-        <div class="token-controls" *ngIf="activeTokenMenu === token.id" (click)="$event.stopPropagation()">
-          <div class="token-controls-top">
-            <button *ngIf="isGM" (click)="toggleTokenLock(token)" class="token-ctrl-btn">
-              {{ token.locked ? '🔒' : '🔓' }}
-            </button>
-            <button (click)="removeToken(token.id)" class="token-ctrl-btn token-ctrl-delete">×</button>
-          </div>
-          <div class="token-controls-bottom">
-            <button *ngFor="let cond of CONDITIONS" (click)="toggleCondition(token, cond.id, $event)"
-              class="token-ctrl-btn" [class.condition-active]="token.conditions?.includes(cond.id)"
-              [title]="cond.label">
-              {{ cond.icon }}
-            </button>
-          </div>
+        <div class="grid" *ngIf="showGrid" [style.gridTemplateColumns]="'repeat(' + gridColumns + ', 1fr)'"
+          [style.gridTemplateRows]="'repeat(' + gridRows + ', 1fr)'">
+          <div class="grid-cell" *ngFor="let i of getGridCells()"></div>
         </div>
 
-        <div class="token" [style.backgroundColor]="token.image ? 'transparent' : token.color"
-          [class.token-locked]="token.locked" (click)="toggleTokenMenu(token.id, $event)">
-          <img *ngIf="token.image" [src]="token.image" class="token-image" alt="token" />
-          <span class="token-label" *ngIf="!token.image">{{ token.label || token.name || token.id }}</span>
+        <div class="token-wrapper" *ngFor="let token of tokens; trackBy: trackByTokenId" cdkDrag
+          [cdkDragDisabled]="token.locked" [cdkDragFreeDragPosition]="{x: token.x * gridSize, y: token.y * gridSize}"
+          (cdkDragEnded)="onTokenDragEnded($event, token)" [style.width.px]="gridSize" [style.height.px]="gridSize">
 
-          <!-- Iconos de condiciones activas -->
-          <div class="token-condition-icons" *ngIf="token.conditions?.length">
-            <span *ngFor="let c of token.conditions" class="condition-icon">{{ getConditionIcon(c) }}</span>
+          <div class="token-controls" *ngIf="activeTokenMenu === token.id" (click)="$event.stopPropagation()">
+            <div class="token-controls-top">
+              <button *ngIf="isGM" (click)="toggleTokenLock(token)" class="token-ctrl-btn">
+                {{ token.locked ? '🔒' : '🔓' }}
+              </button>
+              <button (click)="removeToken(token.id)" class="token-ctrl-btn token-ctrl-delete">×</button>
+            </div>
+            <div class="token-controls-bottom">
+              <button *ngFor="let cond of CONDITIONS" (click)="toggleCondition(token, cond.id, $event)"
+                class="token-ctrl-btn" [class.condition-active]="token.conditions?.includes(cond.id)"
+                [title]="cond.label">
+                {{ cond.icon }}
+              </button>
+            </div>
+          </div>
+
+          <div class="token" [style.backgroundColor]="token.image ? 'transparent' : token.color"
+            [class.token-locked]="token.locked" (click)="toggleTokenMenu(token.id, $event)">
+            <img *ngIf="token.image" [src]="token.image" class="token-image" alt="token" />
+            <span class="token-label" *ngIf="!token.image">{{ token.label || token.name || token.id }}</span>
+            <div class="token-condition-icons" *ngIf="token.conditions?.length">
+              <span *ngFor="let c of token.conditions" class="condition-icon">{{ getConditionIcon(c) }}</span>
+            </div>
           </div>
         </div>
       </div>

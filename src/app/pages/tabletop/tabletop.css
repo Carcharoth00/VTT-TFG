@@ -337,7 +337,7 @@ html {
 }
 
 /* ========== ÁREA PRINCIPAL ========== */
-.tabletop-main {
+/*.tabletop-main {
   flex: 1;
   display: flex;
   align-items: center;
@@ -347,9 +347,24 @@ html {
   background:
     radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
     radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+}*/
+
+.tabletop-main {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  cursor: default;
 }
 
-.grid-wrapper {
+.canvas-viewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+/*.grid-wrapper {
   position: relative;
   background-size: cover;
   background-position: center;
@@ -359,6 +374,15 @@ html {
     0 0 30px rgba(59, 130, 246, 0.3),
     0 10px 40px rgba(0, 0, 0, 0.5);
   transition: all 0.3s ease;
+}*/
+
+.grid-wrapper {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  border: 3px solid #3b82f6;
+  border-radius: 8px;
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.3), 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
 /* Cuadrícula */

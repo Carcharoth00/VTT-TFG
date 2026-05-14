@@ -23,7 +23,7 @@ import { LibraryItem, LibraryService } from '../../services/library.service';
   styleUrl: './tabletop.css',
 })
 export class Tabletop implements OnInit, OnDestroy {
-  @ViewChild('gridWrapper') gridWrapper!: ElementRef;
+  @ViewChild('canvasViewport') canvasViewport!: ElementRef;
 
   //Usuarios
   connectedUsers: { username: string, userId: number, role: string }[] = [];
@@ -41,6 +41,12 @@ export class Tabletop implements OnInit, OnDestroy {
   gridRows = 10;
   backgroundImage: string | null = null;
   zoomLevel = 1;
+  panX = 0;
+  panY = 0;
+  showGrid = true;
+  private isPanning = false;
+  private lastMouseX = 0;
+  private lastMouseY = 0;
 
   // Tokens
   tokens: Token[] = [];
@@ -100,6 +106,10 @@ export class Tabletop implements OnInit, OnDestroy {
         this.username = user.username;
         this.route.params.subscribe(params => {
           this.roomId = params['id'];
+          const viewportWidth = window.innerWidth - 600; // restar paneles laterales aprox
+          const viewportHeight = window.innerHeight;
+          this.panX = (viewportWidth - this.gridColumns * this.gridSize) / 2;
+          this.panY = (viewportHeight - this.gridRows * this.gridSize) / 2;
           this.libraryService.getItems(+this.roomId).subscribe({
             next: (response) => {
               this.libraryImages = response.items;
@@ -185,7 +195,6 @@ export class Tabletop implements OnInit, OnDestroy {
         this.gridRows = state.gridConfig.rows;
       }
       this.backgroundImage = state.backgroundImage || null;
-      this.zoomLevel = state.zoomLevel || 1;
       this.chatMessages = state.chatMessages || [];
       this.cdr.markForCheck();
     });
@@ -233,11 +242,6 @@ export class Tabletop implements OnInit, OnDestroy {
         this.backgroundImage = null;
         this.cdr.detectChanges();
       }
-    });
-
-    this.socket.on('zoom-updated', (zoom: number) => {
-      this.zoomLevel = zoom;
-      this.cdr.markForCheck();
     });
 
     // ================ Chat events ===============
@@ -358,7 +362,6 @@ export class Tabletop implements OnInit, OnDestroy {
   zoomIn() {
     if (this.zoomLevel < 3) {
       this.zoomLevel += 0.2;
-      this.emitZoomUpdate();
       this.cdr.markForCheck();
     }
   }
@@ -366,7 +369,6 @@ export class Tabletop implements OnInit, OnDestroy {
   zoomOut() {
     if (this.zoomLevel > 0.5) {
       this.zoomLevel -= 0.2;
-      this.emitZoomUpdate();
       this.cdr.markForCheck();
     }
   }
@@ -375,21 +377,13 @@ export class Tabletop implements OnInit, OnDestroy {
     const value = parseInt(event.target.value);
     if (value >= 50 && value <= 300) {
       this.zoomLevel = value / 100;
-      this.emitZoomUpdate();
       this.cdr.markForCheck();
     }
   }
 
   resetZoom() {
     this.zoomLevel = 1;
-    this.emitZoomUpdate();
     this.cdr.markForCheck();
-  }
-
-  private emitZoomUpdate() {
-    if (this.isConnected) {
-      this.socket.emit('update-zoom', { roomId: this.roomId, zoom: this.zoomLevel });
-    }
   }
 
   updateGridDimensions() {
@@ -403,6 +397,47 @@ export class Tabletop implements OnInit, OnDestroy {
       };
       this.socket.emit('update-grid', { roomId: this.roomId, config });
     }
+  }
+
+  onWheel(event: WheelEvent) {
+    event.preventDefault();
+    const delta = event.deltaY > 0 ? -0.1 : 0.1;
+    const newZoom = Math.min(3, Math.max(0.3, Math.round((this.zoomLevel + delta) * 10) / 10));
+
+    const main = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const mouseX = event.clientX - main.left;
+    const mouseY = event.clientY - main.top;
+
+    // Ajustar pan para que el zoom sea desde el cursor
+    this.panX = mouseX - (mouseX - this.panX) * (newZoom / this.zoomLevel);
+    this.panY = mouseY - (mouseY - this.panY) * (newZoom / this.zoomLevel);
+
+    this.zoomLevel = newZoom;
+    this.cdr.markForCheck();
+  }
+
+  onCanvasMouseDown(event: MouseEvent) {
+    if (event.button === 1 || (event.button === 0 && event.altKey)) {
+      this.isPanning = true;
+      this.lastMouseX = event.clientX;
+      this.lastMouseY = event.clientY;
+      event.preventDefault();
+    }
+  }
+
+  onCanvasMouseMove(event: MouseEvent) {
+    if (!this.isPanning) return;
+    const dx = event.clientX - this.lastMouseX;
+    const dy = event.clientY - this.lastMouseY;
+    this.panX += dx;
+    this.panY += dy;
+    this.lastMouseX = event.clientX;
+    this.lastMouseY = event.clientY;
+    this.cdr.markForCheck();
+  }
+
+  onCanvasMouseUp(event: MouseEvent) {
+    this.isPanning = false;
   }
 
   // ========== BACKGROUND IMAGE ==========
@@ -532,33 +567,25 @@ export class Tabletop implements OnInit, OnDestroy {
 
   // CDK Drag Drop Event
   onTokenDragEnded(event: CdkDragEnd, token: Token) {
-    const scaledGridSize = this.getScaledGridSize();
     const distance = event.distance;
+    const deltaX = distance.x / this.zoomLevel;
+    const deltaY = distance.y / this.zoomLevel;
 
-    // Calcular nueva posición basada en el desplazamiento
-    const deltaX = distance.x;
-    const deltaY = distance.y;
-
-    // Calcular nueva posición en celdas
-    const currentPixelX = token.x * scaledGridSize;
-    const currentPixelY = token.y * scaledGridSize;
+    const currentPixelX = token.x * this.gridSize;
+    const currentPixelY = token.y * this.gridSize;
 
     const newPixelX = currentPixelX + deltaX;
     const newPixelY = currentPixelY + deltaY;
 
-    // Convertir a coordenadas de celda
-    let newX = Math.round(newPixelX / scaledGridSize);
-    let newY = Math.round(newPixelY / scaledGridSize);
+    let newX = Math.round(newPixelX / this.gridSize);
+    let newY = Math.round(newPixelY / this.gridSize);
 
-    // Limitar a los bordes de la cuadrícula
     newX = Math.max(0, Math.min(newX, this.gridColumns - 1));
     newY = Math.max(0, Math.min(newY, this.gridRows - 1));
 
-    // Actualizar posición del token
     token.x = newX;
     token.y = newY;
 
-    // Emitir actualización
     if (this.isConnected) {
       this.socket.emit('move-token', {
         roomId: this.roomId,
