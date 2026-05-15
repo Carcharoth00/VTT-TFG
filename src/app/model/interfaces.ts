@@ -9,6 +9,8 @@ export interface Token {
   character_id?: number | null;
   locked?: boolean;
   conditions?: string[] | null;
+  hp?: number | null;
+  max_hp?: number | null;
 }
 
 export interface GridConfig {

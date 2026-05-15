@@ -13,12 +13,12 @@ class Token {
 
   // Crear token
   static async create(tokenData) {
-    const { game_id, map_id = null, x, y, color, label, image = null, name = null, character_id = null } = tokenData;
+    const { game_id, map_id = null, x, y, color, label, image = null, name = null, character_id = null, hp = null, max_hp = null } = tokenData;
     const [result] = await pool.execute(
-      'INSERT INTO tokens (game_id, map_id, x, y, color, label, image, name, character_id, locked) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [game_id, map_id, x, y, color, label, image, name, character_id, false]
+      'INSERT INTO tokens (game_id, map_id, x, y, color, label, image, name, character_id, hp, max_hp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [game_id, map_id, x, y, color, label, image, name, character_id, hp, max_hp]
     );
-    return { id: result.insertId, game_id, map_id, x, y, color, label, image, name, character_id, locked: false };
+    return { id: result.insertId, game_id, map_id, x, y, color, label, image, name, character_id, hp, max_hp };
   }
 
   // Actualizar posición
@@ -50,6 +50,14 @@ class Token {
     await pool.execute(
       'UPDATE tokens SET conditions = ? WHERE id = ?',
       [JSON.stringify(conditions), tokenId]
+    );
+  }
+
+  //Actualizar HP
+  static async updateHP(tokenId, hp) {
+    await pool.execute(
+      'UPDATE tokens SET hp = ? WHERE id = ?',
+      [hp, tokenId]
     );
   }
 

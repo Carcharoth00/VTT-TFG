@@ -234,6 +234,11 @@ export class PixiCanvasService {
 
         this.tokensContainer.addChild(container);
         this.tokenSprites.set(token.id, container);
+
+        //Barra de vida
+        if (token.hp !== null && token.hp !== undefined && token.max_hp) {
+            this.updateTokenHP(token.id, token.hp, token.max_hp);
+        }
     }
 
     private makeDraggable(container: PIXI.Container, token: Token) {
@@ -358,6 +363,7 @@ export class PixiCanvasService {
         onDelete: () => void,
         onCondition: (conditionId: string) => void,
         onAddToInitiative?: () => void,
+        onHPChange?: (delta: number) => void,
         conditions: { id: string, icon: string }[]
     }) {
         this.hideTokenMenu();
@@ -368,7 +374,8 @@ export class PixiCanvasService {
 
         const btnSize = 32;
         const gap = 4;
-        const extraBtns = callbacks.onAddToInitiative ? 1 : 0;
+        const hpBtns = callbacks.onHPChange && token.max_hp ? 2 : 0;
+        const extraBtns = (callbacks.onAddToInitiative ? 1 : 0) + hpBtns;
         const allBtns = isGM ? 2 + extraBtns + callbacks.conditions.length : 1 + callbacks.conditions.length;
         const menuWidth = allBtns * (btnSize + gap) - gap;
 
@@ -404,10 +411,25 @@ export class PixiCanvasService {
             btnX += btnSize + gap;
         }
 
+        if (callbacks.onHPChange && token.max_hp) {
+            const hpMinusBtn = this.createMenuButton('-❤️', btnX, 0, btnSize, () => {
+                callbacks.onHPChange!(-1);
+            }, 0xef4444);
+            menu.addChild(hpMinusBtn);
+            btnX += btnSize + gap;
+
+            const hpPlusBtn = this.createMenuButton('+❤️', btnX, 0, btnSize, () => {
+                callbacks.onHPChange!(1);
+            }, 0x10b981);
+            menu.addChild(hpPlusBtn);
+            btnX += btnSize + gap;
+        }
+
         for (const cond of callbacks.conditions) {
             const active = token.conditions?.includes(cond.id);
             const condBtn = this.createMenuButton(cond.icon, btnX, 0, btnSize, () => {
                 callbacks.onCondition(cond.id);
+                // No cerrar el menú al cambiar condición
             }, active ? 0x3b82f6 : 0x374151);
             menu.addChild(condBtn);
             btnX += btnSize + gap;
@@ -454,6 +476,10 @@ export class PixiCanvasService {
             bg.clear();
             bg.roundRect(0, 0, size, size, 6);
             bg.fill({ color: bgColor });
+        });
+
+        btn.on('pointerup', (e: PIXI.FederatedPointerEvent) => {
+            e.stopPropagation();
         });
 
         return btn;
@@ -543,5 +569,46 @@ export class PixiCanvasService {
             this.activeHighlight.destroy();
             this.activeHighlight = null;
         }
+    }
+
+    updateTokenHP(tokenId: number, hp: number, maxHP: number) {
+        this.runWhenReady(() => {
+            const container = this.tokenSprites.get(tokenId);
+            if (!container) return;
+
+            const existing = container.getChildByLabel('hpbar');
+            if (existing) container.removeChild(existing);
+
+            if (!maxHP || maxHP <= 0) return;
+
+            const barContainer = new PIXI.Container();
+            barContainer.label = 'hpbar';
+            barContainer.y = this.gridSize + 2;
+
+            const barWidth = this.gridSize;
+            const barHeight = 6;
+            const ratio = Math.max(0, Math.min(1, hp / maxHP));
+
+            const barBg = new PIXI.Graphics();
+            barBg.roundRect(0, 0, barWidth, barHeight, 2);
+            barBg.fill({ color: 0x374151 });
+            barContainer.addChild(barBg);
+
+            const barFill = new PIXI.Graphics();
+            const fillColor = ratio > 0.5 ? 0x10b981 : ratio > 0.25 ? 0xf59e0b : 0xef4444;
+            barFill.roundRect(0, 0, barWidth * ratio, barHeight, 2);
+            barFill.fill({ color: fillColor });
+            barContainer.addChild(barFill);
+
+            const hpText = new PIXI.Text({
+                text: `${hp}/${maxHP}`,
+                style: { fontSize: 8, fill: 0xffffff }
+            });
+            hpText.x = barWidth / 2 - hpText.width / 2;
+            hpText.y = -10;
+            barContainer.addChild(hpText);
+
+            container.addChild(barContainer);
+        });
     }
 }

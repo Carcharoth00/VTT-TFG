@@ -1371,3 +1371,42 @@ html {
   font-size: 0.7rem;
   color: #9ca3af;
 }
+
+.initiative-token {
+  position: relative;
+}
+
+.initiative-remove {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  background: #ef4444;
+  border: none;
+  border-radius: 50%;
+  color: white;
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  z-index: 10;
+}
+
+.initiative-toggle {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(245,158,11,0.8);
+  border: none;
+  color: white;
+  padding: 0.2rem 1rem;
+  cursor: pointer;
+  border-radius: 0 0 8px 8px;
+  z-index: 101;
+  font-size: 0.875rem;
+}

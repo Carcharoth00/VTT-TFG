@@ -53,6 +53,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   initiativeOrder: { tokenId: number, name: string, image: string | null, color: string }[] = [];
   currentTurn = 0;
   currentRound = 1;
+  showInitiativeBar = true;
 
   // Tokens
   tokens: Token[] = [];
@@ -62,6 +63,8 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   newTokenName: string = '';
   newTokenColor: string = '#FF0000';
   selectedCharacterId: number | null = null;
+  newTokenHP: number | null = null;
+  newTokenMaxHP: number | null = null;
 
   // Socket.IO
   private socket!: Socket;
@@ -142,6 +145,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
             this.toggleCondition(token, conditionId, fakeEvent);
           },
           onAddToInitiative: this.combatActive && this.isGM ? () => this.addToInitiative(token) : undefined,
+          onHPChange: this.isGM ? (delta) => this.updateTokenHP(token, delta) : undefined,
           conditions: this.CONDITIONS
         });
       }
@@ -239,6 +243,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       this.combatActive = state.combatActive || false;
       this.initiativeOrder = state.initiativeOrder || [];
       this.currentTurn = state.currentTurn || 0;
+      this.currentRound = state.currentRound || 1;
 
       if (state.gridConfig) {
         this.gridSize = state.gridConfig.size;
@@ -367,6 +372,14 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       this.cdr.markForCheck();
     });
 
+    this.socket.on('token-hp-updated', (data: { tokenId: number, hp: number }) => {
+      const token = this.tokens.find(t => t.id === data.tokenId);
+      if (token) {
+        token.hp = data.hp;
+        this.pixiService.updateTokenHP(data.tokenId, data.hp, token.max_hp || 0);
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   leaveRoom() {
@@ -513,6 +526,8 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     this.newTokenImage = character.avatar || null;
     this.newTokenName = character.name;
     this.selectedCharacterId = character.id;
+    this.newTokenHP = character.hp;
+    this.newTokenMaxHP = character.max_hp;
     this.cdr.detectChanges();
   }
 
@@ -535,7 +550,9 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       label: this.newTokenName || `T${Date.now() % 1000}`,
       image: this.newTokenImage,
       name: this.newTokenName || null,
-      character_id: this.selectedCharacterId
+      character_id: this.selectedCharacterId,
+      hp: this.newTokenHP,
+      max_hp: this.newTokenMaxHP
     };
     this.socket.emit('add-token', { roomId: this.roomId, token });
     this.showTokenModal = false;
@@ -846,6 +863,23 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       color: token.color
     }];
     this.socket.emit('update-initiative-order', { roomId: this.roomId, initiativeOrder: newOrder });
+  }
+
+  removeFromInitiative(tokenId: number) {
+    if (!this.isGM) return;
+    const newOrder = this.initiativeOrder.filter(e => e.tokenId !== tokenId);
+    const newCurrentTurn = this.currentTurn >= newOrder.length ? 0 : this.currentTurn;
+    this.socket.emit('update-initiative-order', { roomId: this.roomId, initiativeOrder: newOrder });
+    this.socket.emit('set-current-turn', { roomId: this.roomId, currentTurn: newCurrentTurn });
+  }
+
+  updateTokenHP(token: Token, delta: number) {
+    if (!this.isGM) return;
+    const maxHP = token.max_hp || 0;
+    const newHP = Math.max(0, Math.min(maxHP, (token.hp || 0) + delta));
+    token.hp = newHP;
+    this.pixiService.updateTokenHP(token.id, newHP, maxHP);
+    this.socket.emit('update-token-hp', { roomId: this.roomId, tokenId: token.id, hp: newHP });
   }
 
 }

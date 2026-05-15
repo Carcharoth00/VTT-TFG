@@ -113,7 +113,10 @@
     <canvas #pixiCanvas class="pixi-canvas"></canvas>
   </main>
 
-  <div class="initiative-bar" *ngIf="combatActive">
+  <button class="initiative-toggle" *ngIf="combatActive" (click)="showInitiativeBar = !showInitiativeBar">
+    ⚔️
+  </button>
+  <div class="initiative-bar" *ngIf="combatActive && showInitiativeBar">
     <div class="initiative-info">
       <span class="round-counter">Ronda {{ currentRound }}</span>
       <span class="turn-counter">{{ currentTurn + 1 }}/{{ initiativeOrder.length }}</span>
@@ -124,6 +127,7 @@
       (cdkDropListDropped)="onInitiativeReorder($event)">
       <div class="initiative-token" *ngFor="let entry of initiativeOrder; let i = index" cdkDrag
         [cdkDragDisabled]="!isGM" [class.active-turn]="i === currentTurn">
+        <button *ngIf="isGM" class="initiative-remove" (click)="removeFromInitiative(entry.tokenId)">×</button>
         <img *ngIf="entry.image" [src]="entry.image" class="initiative-avatar" alt="token" />
         <div *ngIf="!entry.image" class="initiative-placeholder" [style.backgroundColor]="entry.color">
           {{ entry.name.charAt(0) }}

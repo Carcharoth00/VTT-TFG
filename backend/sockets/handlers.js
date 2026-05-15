@@ -91,7 +91,7 @@ function setupSocketHandlers(io) {
         combatActive: room.combatActive || false,
         initiativeOrder: room.initiativeOrder || [],
         currentTurn: room.currentTurn || 0,
-        currentRound: room.currentRound || 1,
+        currentRound: room.currentRound || 1
       });
 
       socket.on('toggle-free-movement', ({ roomId, freeMovement }) => {
@@ -143,7 +143,9 @@ function setupSocketHandlers(io) {
             label: token.label,
             image: token.image || null,
             name: token.name || null,
-            character_id: token.character_id || null
+            character_id: token.character_id || null,
+            hp: token.hp || null,
+            max_hp: token.max_hp || null
           });
           room.tokens.push(savedToken);
           io.to(roomId).emit('token-added', savedToken);
@@ -363,6 +365,39 @@ function setupSocketHandlers(io) {
           initiativeOrder: room.initiativeOrder,
           currentTurn: room.currentTurn
         });
+      }
+    });
+
+    socket.on('set-current-turn', ({ roomId, currentTurn }) => {
+      const room = rooms.get(roomId);
+      if (room) {
+        room.currentTurn = currentTurn;
+        io.to(roomId).emit('combat-updated', {
+          combatActive: room.combatActive,
+          initiativeOrder: room.initiativeOrder,
+          currentTurn: room.currentTurn,
+          currentRound: room.currentRound
+        });
+      }
+    });
+
+    socket.on('update-token-hp', async ({ roomId, tokenId, hp }) => {
+      const room = rooms.get(roomId);
+      if (room) {
+        const token = room.tokens.find(t => t.id === tokenId);
+        if (token) {
+          token.hp = hp;
+          try {
+            await Token.updateHP(tokenId, hp);
+            // Si el token está vinculado a un personaje, actualizar también la ficha
+            if (token.character_id) {
+              await require('../models/Character').updateHP(token.character_id, hp);
+            }
+          } catch (error) {
+            console.error('Error actualizando HP:', error);
+          }
+        }
+        io.to(roomId).emit('token-hp-updated', { tokenId, hp });
       }
     });
 
