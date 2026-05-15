@@ -41,6 +41,10 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   gridRows = 10;
   backgroundImage: string | null = null;
   showGrid = true;
+  showMapModal = false;
+  pendingMapFile: File | null = null;
+  mapColumns = 20;
+  mapRows = 15;
 
   // Tokens
   tokens: Token[] = [];
@@ -354,22 +358,74 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   onImageUpload(event: any) {
     const file = event.target.files[0];
     if (!file) return;
+    this.pendingMapFile = file;
+
+    // Detectar dimensiones de la imagen automáticamente
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      // Sugerir columnas/filas basándose en la imagen
+      this.mapColumns = Math.round(img.width / 70); // 70px por celda como sugerencia
+      this.mapRows = Math.round(img.height / 70);
+      URL.revokeObjectURL(url);
+      this.showMapModal = true;
+      this.cdr.detectChanges();
+    };
+    img.src = url;
+  }
+
+  confirmMapUpload() {
+    if (!this.pendingMapFile) return;
+    const file = this.pendingMapFile;
     const reader = new FileReader();
     reader.onload = (e: any) => {
       const imageData = e.target.result;
-      const mapName = file.name.replace(/\.[^/.]+$/, '');
-      this.mapService.uploadMap(
-        +this.roomId, mapName, imageData,
-        { cols: this.gridColumns, rows: this.gridRows, size: this.gridSize }
-      ).subscribe({
-        next: (response) => {
-          this.maps.push(response.map);
-          this.activateMap(response.map.id);
-        },
-        error: () => console.error('Error subiendo mapa')
-      });
+
+      // Calcular gridSize a partir de las dimensiones reales
+      const img = new Image();
+      img.onload = () => {
+        const calculatedSize = Math.round(img.width / this.mapColumns);
+        this.gridSize = calculatedSize;
+        this.gridColumns = this.mapColumns;
+        this.gridRows = this.mapRows;
+        this.pixiService.setGridConfig(this.gridColumns, this.gridRows, this.gridSize);
+
+        const mapName = file.name.replace(/\.[^/.]+$/, '');
+        this.mapService.uploadMap(
+          +this.roomId, mapName, imageData,
+          { cols: this.gridColumns, rows: this.gridRows, size: this.gridSize }
+        ).subscribe({
+          next: (response) => {
+            this.maps.push(response.map);
+            this.activateMap(response.map.id);
+          },
+          error: () => console.error('Error subiendo mapa')
+        });
+        this.showMapModal = false;
+        this.pendingMapFile = null;
+      };
+      img.src = imageData;
     };
     reader.readAsDataURL(file);
+  }
+
+  updateGridDimensions() {
+    if (this.backgroundImage) {
+      const img = new Image();
+      img.onload = () => {
+        this.gridSize = Math.round(img.width / this.gridColumns);
+        this.pixiService.setGridConfig(this.gridColumns, this.gridRows, this.gridSize);
+        if (this.isConnected) {
+          this.socket.emit('update-grid', {
+            roomId: this.roomId,
+            config: { size: this.gridSize, columns: this.gridColumns, rows: this.gridRows }
+          });
+        }
+      };
+      img.src = this.backgroundImage;
+    } else {
+      this.pixiService.setGridConfig(this.gridColumns, this.gridRows, this.gridSize);
+    }
   }
 
   activateMap(mapId: number) {
