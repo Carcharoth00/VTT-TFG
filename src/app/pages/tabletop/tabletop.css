@@ -23,6 +23,7 @@ html {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
   color: #e0e0e0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  position: relative;
 }
 
 /* ========== PANEL DE CONTROL ========== */
@@ -169,59 +170,27 @@ html {
   }
 }
 
-/* Zoom */
-.zoom-controls {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.btn-zoom {
-  width: 40px;
-  height: 40px;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1.5rem;
-  font-weight: bold;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-zoom:hover {
-  background-color: #2563eb;
-  transform: scale(1.1);
-}
-
-.zoom-level {
-  flex: 1;
-  text-align: center;
-  font-weight: 600;
-  font-size: 1.1rem;
-  color: #3b82f6;
-}
-
-.zoom-input {
-  width: 60px;
-  text-align: center;
-  padding: 0.3rem;
-  background: rgba(255, 255, 255, 0.05);
+.btn-toggle-grid {
+  width: 100%;
+  padding: 0.6rem;
   border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-sm);
-  color: white;
-  font-weight: 600;
-  font-size: 1rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #b0b8c8;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+  transition: all 0.2s;
 }
 
-.zoom-unit {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
+.btn-toggle-grid.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #93c5fd;
+}
+
+.btn-toggle-grid:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* Mensajes */
@@ -236,6 +205,20 @@ html {
   margin-top: 0.8rem;
   font-size: 0.9rem;
   color: #d1d5db;
+}
+
+.token-context-menu {
+  position: absolute;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  animation: fadeIn 0.15s ease;
+  background: rgba(30,30,46,0.95);
+  border-radius: 8px;
+  padding: 0.4rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
 /* Token Editor */
@@ -336,7 +319,7 @@ html {
 }
 
 /* ========== ÁREA PRINCIPAL ========== */
-.tabletop-main {
+/*.tabletop-main {
   flex: 1;
   display: flex;
   align-items: center;
@@ -346,9 +329,16 @@ html {
   background:
     radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
     radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+}*/
+
+.tabletop-main {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  cursor: default;
 }
 
-.grid-wrapper {
+/*.grid-wrapper {
   position: relative;
   background-size: cover;
   background-position: center;
@@ -358,6 +348,15 @@ html {
     0 0 30px rgba(59, 130, 246, 0.3),
     0 10px 40px rgba(0, 0, 0, 0.5);
   transition: all 0.3s ease;
+}*/
+
+.grid-wrapper {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  border: 3px solid #3b82f6;
+  border-radius: 8px;
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.3), 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
 /* Cuadrícula */
@@ -456,6 +455,12 @@ html {
   border-radius: 4px;
 }
 
+.pixi-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .btn-upload {
   width: 100%;
   padding: 0.75rem;
@@ -510,6 +515,16 @@ html {
 .tabletop-main::-webkit-scrollbar-thumb:hover,
 .chat-messages::-webkit-scrollbar-thumb:hover {
   background: #2563eb;
+}
+
+.badge {
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-left: 0.25rem;
 }
 
 /* ========== PANEL DE CHAT ========== */
@@ -1152,10 +1167,25 @@ html {
   left: 50%;
   transform: translateX(-50%);
   display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 0.25rem;
   z-index: 100;
   margin-bottom: 4px;
   animation: fadeIn 0.15s ease;
+}
+
+.token-controls-top {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.token-controls-bottom {
+  display: flex;
+  gap: 0.2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 140px;
 }
 
 @keyframes fadeIn {
@@ -1171,14 +1201,14 @@ html {
 }
 
 .token-ctrl-btn {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 6px;
   border: none;
   background: rgba(30, 30, 46, 0.95);
   color: white;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1202,4 +1232,56 @@ html {
 .token-locked {
   cursor: not-allowed !important;
   border-color: rgba(239, 68, 68, 0.5) !important;
+}
+
+.panel-toggle {
+  position: relative;
+  width: 20px;
+  height: 60px;
+  align-self: center;
+  background: rgba(59, 130, 246, 0.3);
+  border: none;
+  color: white;
+  cursor: pointer;
+  z-index: 50;
+  font-size: 0.7rem;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.panel-toggle:hover {
+  background: rgba(59, 130, 246, 0.6);
+}
+
+.left-toggle {
+  border-radius: 0 6px 6px 0;
+}
+
+.right-toggle {
+  border-radius: 6px 0 0 6px;
+}
+
+.token-conditions-menu {
+  display: flex;
+  gap: 0.2rem;
+  flex-wrap: wrap;
+  max-width: 120px;
+}
+
+.condition-active {
+  background: rgba(59, 130, 246, 0.5) !important;
+}
+
+.token-condition-icons {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+}
+
+.condition-icon {
+  font-size: 0.6rem;
+  line-height: 1;
 }

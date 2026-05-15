@@ -123,6 +123,7 @@ export class Dashboard implements OnInit {
     this.gameService.deleteGame(game.id).subscribe({
       next: () => {
         this.games = this.games.filter(g => g.id !== game.id);
+        this.cdr.detectChanges();
       },
       error: () => alert('Error al eliminar la partida')
     });

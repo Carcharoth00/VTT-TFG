@@ -62,6 +62,14 @@ class Map {
     );
     return result.affectedRows > 0;
   }
+
+  // Persistencia de configuración de cuadrícula
+  static async updateGridConfig(mapId, cols, rows, size) {
+    await pool.execute(
+      'UPDATE maps SET grid_cols = ?, grid_rows = ?, grid_size = ? WHERE id = ?',
+      [cols, rows, size, mapId]
+    );
+  }
 }
 
 module.exports = Map;
