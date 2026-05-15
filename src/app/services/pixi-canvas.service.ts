@@ -15,6 +15,7 @@ export class PixiCanvasService {
     private activeMenu: PIXI.Container | null = null;
     private tokenListeners: Map<number, { onPointerMove: Function, onPointerUp: Function }> = new Map();
     private isDraggingAny = false;
+    private freeMovement = false;
 
     private runWhenReady(fn: () => void) {
         if (this.isReady) {
@@ -269,15 +270,25 @@ export class PixiCanvasService {
             container.cursor = (container as any)._isLocked ? 'not-allowed' : 'grab';
 
             if (state.hasMoved) {
-                const snappedX = Math.round(container.x / this.gridSize);
-                const snappedY = Math.round(container.y / this.gridSize);
-                const clampedX = Math.max(0, Math.min(snappedX, this.gridColumns - 1));
-                const clampedY = Math.max(0, Math.min(snappedY, this.gridRows - 1));
-                container.x = clampedX * this.gridSize;
-                container.y = clampedY * this.gridSize;
-                token.x = clampedX;
-                token.y = clampedY;
-                this.onTokenMoved?.(token.id, clampedX, clampedY);
+                if (this.freeMovement) {
+                    // Modo libre: guardar posición en píxeles dividida por gridSize
+                    const x = container.x / this.gridSize;
+                    const y = container.y / this.gridSize;
+                    token.x = x;
+                    token.y = y;
+                    this.onTokenMoved?.(token.id, x, y);
+                } else {
+                    // Modo cuadrícula: snap
+                    const snappedX = Math.round(container.x / this.gridSize);
+                    const snappedY = Math.round(container.y / this.gridSize);
+                    const clampedX = Math.max(0, Math.min(snappedX, this.gridColumns - 1));
+                    const clampedY = Math.max(0, Math.min(snappedY, this.gridRows - 1));
+                    container.x = clampedX * this.gridSize;
+                    container.y = clampedY * this.gridSize;
+                    token.x = clampedX;
+                    token.y = clampedY;
+                    this.onTokenMoved?.(token.id, clampedX, clampedY);
+                }
             } else {
                 this.onTokenClick?.(token.id);
             }
@@ -485,5 +496,9 @@ export class PixiCanvasService {
             container.cursor = locked ? 'not-allowed' : 'grab';
             (container as any)._isLocked = locked;
         });
+    }
+
+    setFreeMovement(free: boolean) {
+        this.freeMovement = free;
     }
 }

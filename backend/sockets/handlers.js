@@ -11,7 +11,8 @@ function getOrCreateRoom(roomId) {
       backgroundImage: null,
       zoomLevel: 1,
       chatMessages: [],
-      users: new Map() // socketId -> { username, userId, role }
+      freeMovement: false,  // añade esto
+      users: new Map()
     });
   }
   return rooms.get(roomId);
@@ -81,7 +82,16 @@ function setupSocketHandlers(io) {
         gridConfig: room.gridConfig,
         backgroundImage: room.backgroundImage,
         zoomLevel: room.zoomLevel,
-        chatMessages: room.chatMessages
+        chatMessages: room.chatMessages,
+        freeMovement: room.freeMovement || false
+      });
+
+      socket.on('toggle-free-movement', ({ roomId, freeMovement }) => {
+        const room = rooms.get(roomId);
+        if (room) {
+          room.freeMovement = freeMovement;
+          io.to(roomId).emit('free-movement-updated', freeMovement);
+        }
       });
 
       socket.to(roomId).emit('system-message', {

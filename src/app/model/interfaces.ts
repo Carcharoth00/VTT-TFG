@@ -40,4 +40,5 @@ export interface RoomState {
   backgroundImage: string | null;
   zoomLevel: number;
   chatMessages: ChatMessage[];
+  freeMovement: boolean;
 }

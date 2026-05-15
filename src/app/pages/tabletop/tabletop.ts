@@ -45,6 +45,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   pendingMapFile: File | null = null;
   mapColumns = 20;
   mapRows = 15;
+  freeMovement = false;
 
   // Tokens
   tokens: Token[] = [];
@@ -225,6 +226,8 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
 
     this.socket.on('room-state', (state: RoomState) => {
       this.tokens = state.tokens || [];
+      this.freeMovement = state.freeMovement || false;
+      this.pixiService.setFreeMovement(this.freeMovement);
       if (state.gridConfig) {
         this.gridSize = state.gridConfig.size;
         this.gridColumns = state.gridConfig.columns;
@@ -331,6 +334,12 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
         this.pixiService.updateTokenConditions(data.tokenId, data.conditions);
         this.cdr.markForCheck();
       }
+    });
+
+    this.socket.on('free-movement-updated', (freeMovement: boolean) => {
+      this.freeMovement = freeMovement;
+      this.pixiService.setFreeMovement(freeMovement);
+      this.cdr.markForCheck();
     });
   }
 
@@ -747,5 +756,12 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       },
       error: () => console.error('Error cambiando rol')
     });
+  }
+
+  toggleFreeMovement() {
+    if (!this.isGM) return;
+    this.freeMovement = !this.freeMovement;
+    this.pixiService.setFreeMovement(this.freeMovement);
+    this.socket.emit('toggle-free-movement', { roomId: this.roomId, freeMovement: this.freeMovement });
   }
 }

@@ -52,6 +52,13 @@
       </div>
     </div>
 
+    <div class="control-section" *ngIf="isGM">
+      <h3>Movimiento</h3>
+      <button (click)="toggleFreeMovement()" class="btn-toggle-grid" [class.active]="freeMovement">
+        {{ freeMovement ? '🆓 Movimiento libre' : '🔲 Movimiento en cuadrícula' }}
+      </button>
+    </div>
+
     <!-- <div class="control-section">
       <h3>Zoom</h3>
       <div class="zoom-controls">
