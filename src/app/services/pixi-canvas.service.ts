@@ -17,6 +17,10 @@ export class PixiCanvasService {
     private isDraggingAny = false;
     private freeMovement = false;
     private activeHighlight: PIXI.Graphics | null = null;
+    private measureLine: PIXI.Graphics | null = null;
+    private measureText: PIXI.Text | null = null;
+    private isMeasuring = false;
+    private measureStart = { x: 0, y: 0 };
 
     private runWhenReady(fn: () => void) {
         if (this.isReady) {
@@ -99,7 +103,23 @@ export class PixiCanvasService {
             this.worldContainer.scale.set(newScale);
         }, { passive: false });
 
+        this.app.canvas.addEventListener('mousemove', (e) => {
+            if (this.isMeasuring) {
+                this.updateMeasure(e);
+                return;
+            }
+            if (!this.isPanning) return;
+            this.worldContainer.x += e.clientX - this.lastX;
+            this.worldContainer.y += e.clientY - this.lastY;
+            this.lastX = e.clientX;
+            this.lastY = e.clientY;
+        });
+
         this.app.canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 0 && e.shiftKey) {
+                this.startMeasure(e);
+                return;
+            }
             if (e.button === 1 || (e.button === 0 && e.altKey)) {
                 this.isPanning = true;
                 this.lastX = e.clientX;
@@ -108,15 +128,13 @@ export class PixiCanvasService {
             }
         });
 
-        this.app.canvas.addEventListener('mousemove', (e) => {
-            if (!this.isPanning) return;
-            this.worldContainer.x += e.clientX - this.lastX;
-            this.worldContainer.y += e.clientY - this.lastY;
-            this.lastX = e.clientX;
-            this.lastY = e.clientY;
+        this.app.canvas.addEventListener('mouseup', (e) => {
+            if (this.isMeasuring) {
+                this.stopMeasure();
+                return;
+            }
+            this.isPanning = false;
         });
-
-        this.app.canvas.addEventListener('mouseup', () => this.isPanning = false);
         this.app.canvas.addEventListener('mouseleave', () => this.isPanning = false);
     }
 
@@ -610,5 +628,78 @@ export class PixiCanvasService {
 
             container.addChild(barContainer);
         });
+    }
+
+    private startMeasure(e: MouseEvent) {
+        this.isMeasuring = true;
+        const rect = this.app.canvas.getBoundingClientRect();
+        const mouseX = (e.clientX - rect.left - this.worldContainer.x) / this.worldContainer.scale.x;
+        const mouseY = (e.clientY - rect.top - this.worldContainer.y) / this.worldContainer.scale.y;
+
+        // Snap al centro de la celda más cercana
+        this.measureStart = {
+            x: Math.round(mouseX / this.gridSize) * this.gridSize,
+            y: Math.round(mouseY / this.gridSize) * this.gridSize
+        };
+
+        this.measureLine = new PIXI.Graphics();
+        this.measureText = new PIXI.Text({
+            text: '',
+            style: {
+                fontSize: 14, fill: 0xffffff, fontWeight: 'bold',
+                dropShadow: true
+            }
+        });
+
+        this.worldContainer.addChild(this.measureLine);
+        this.worldContainer.addChild(this.measureText);
+    }
+
+    private updateMeasure(e: MouseEvent) {
+        if (!this.measureLine || !this.measureText) return;
+
+        const rect = this.app.canvas.getBoundingClientRect();
+        const mouseX = (e.clientX - rect.left - this.worldContainer.x) / this.worldContainer.scale.x;
+        const mouseY = (e.clientY - rect.top - this.worldContainer.y) / this.worldContainer.scale.y;
+
+        const endX = Math.round(mouseX / this.gridSize) * this.gridSize;
+        const endY = Math.round(mouseY / this.gridSize) * this.gridSize;
+
+        const dx = (endX - this.measureStart.x) / this.gridSize;
+        const dy = (endY - this.measureStart.y) / this.gridSize;
+        const distanceCells = Math.sqrt(dx * dx + dy * dy);
+        const distanceMeters = distanceCells * 1.5;
+
+        this.measureLine.clear();
+        this.measureLine.setStrokeStyle({ width: 2, color: 0xf59e0b, alpha: 0.8 });
+        this.measureLine.moveTo(this.measureStart.x, this.measureStart.y);
+        this.measureLine.lineTo(endX, endY);
+        this.measureLine.stroke();
+
+        // Círculo en el origen
+        this.measureLine.circle(this.measureStart.x, this.measureStart.y, 4);
+        this.measureLine.fill({ color: 0xf59e0b });
+
+        // Círculo en el destino
+        this.measureLine.circle(endX, endY, 4);
+        this.measureLine.fill({ color: 0xf59e0b });
+
+        this.measureText.text = `${distanceCells.toFixed(1)} casillas\n${distanceMeters.toFixed(1)} m`;
+        this.measureText.x = endX + 8;
+        this.measureText.y = endY - 20;
+    }
+
+    private stopMeasure() {
+        this.isMeasuring = false;
+        if (this.measureLine) {
+            this.worldContainer.removeChild(this.measureLine);
+            this.measureLine.destroy();
+            this.measureLine = null;
+        }
+        if (this.measureText) {
+            this.worldContainer.removeChild(this.measureText);
+            this.measureText.destroy();
+            this.measureText = null;
+        }
     }
 }
