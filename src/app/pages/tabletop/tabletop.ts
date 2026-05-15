@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { io, Socket } from 'socket.io-client';
+import { DragDropModule, CdkDragDrop } from '@angular/cdk/drag-drop';
 import { Router } from '@angular/router';
 import { Token, GridConfig, ChatMessage, DiceRoll, RoomState } from "../../model/interfaces";
 import { ActivatedRoute } from '@angular/router';
@@ -18,7 +19,7 @@ import { PixiCanvasService } from '../../services/pixi-canvas.service';
 @Component({
   selector: 'app-tabletop',
   standalone: true,
-  imports: [CommonModule, FormsModule, CharactersComponent, NotesComponent],
+  imports: [CommonModule, FormsModule, CharactersComponent, NotesComponent, DragDropModule],
   templateUrl: './tabletop.html',
   styleUrl: './tabletop.css',
 })
@@ -46,6 +47,12 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   mapColumns = 20;
   mapRows = 15;
   freeMovement = false;
+
+  //Iniciativa y combate
+  combatActive = false;
+  initiativeOrder: { tokenId: number, name: string, image: string | null, color: string }[] = [];
+  currentTurn = 0;
+  currentRound = 1;
 
   // Tokens
   tokens: Token[] = [];
@@ -134,6 +141,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
             const fakeEvent = new MouseEvent('click');
             this.toggleCondition(token, conditionId, fakeEvent);
           },
+          onAddToInitiative: this.combatActive && this.isGM ? () => this.addToInitiative(token) : undefined,
           conditions: this.CONDITIONS
         });
       }
@@ -228,6 +236,10 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       this.tokens = state.tokens || [];
       this.freeMovement = state.freeMovement || false;
       this.pixiService.setFreeMovement(this.freeMovement);
+      this.combatActive = state.combatActive || false;
+      this.initiativeOrder = state.initiativeOrder || [];
+      this.currentTurn = state.currentTurn || 0;
+
       if (state.gridConfig) {
         this.gridSize = state.gridConfig.size;
         this.gridColumns = state.gridConfig.columns;
@@ -341,6 +353,20 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       this.pixiService.setFreeMovement(freeMovement);
       this.cdr.markForCheck();
     });
+
+    this.socket.on('combat-updated', (data: any) => {
+      this.combatActive = data.combatActive;
+      this.initiativeOrder = data.initiativeOrder;
+      this.currentTurn = data.currentTurn;
+      this.currentRound = data.currentRound || 1;
+      if (data.combatActive) {
+        this.highlightActiveTurn();
+      } else {
+        this.pixiService.clearHighlight();
+      }
+      this.cdr.markForCheck();
+    });
+
   }
 
   leaveRoom() {
@@ -764,4 +790,62 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     this.pixiService.setFreeMovement(this.freeMovement);
     this.socket.emit('toggle-free-movement', { roomId: this.roomId, freeMovement: this.freeMovement });
   }
+
+  startCombat() {
+    if (!this.isGM) return;
+    const initiativeOrder = this.tokens.map(t => ({
+      tokenId: t.id,
+      name: t.name || t.label || String(t.id),
+      image: t.image || null,
+      color: t.color
+    }));
+    this.socket.emit('start-combat', { roomId: this.roomId, initiativeOrder });
+  }
+
+  endCombat() {
+    if (!this.isGM) return;
+    this.pixiService.clearHighlight();
+    this.socket.emit('end-combat', { roomId: this.roomId });
+  }
+
+  nextTurn() {
+    if (!this.isGM) return;
+    this.socket.emit('next-turn', { roomId: this.roomId });
+  }
+
+  prevTurn() {
+    if (!this.isGM) return;
+    this.socket.emit('prev-turn', { roomId: this.roomId });
+  }
+
+  onInitiativeReorder(event: CdkDragDrop<any[]>) {
+    const order = [...this.initiativeOrder];
+    const [moved] = order.splice(event.previousIndex, 1);
+    order.splice(event.currentIndex, 0, moved);
+    this.initiativeOrder = order;
+    this.socket.emit('update-initiative-order', { roomId: this.roomId, initiativeOrder: order });
+  }
+
+  highlightActiveTurn() {
+    if (!this.combatActive || this.initiativeOrder.length === 0) return;
+    const activeToken = this.initiativeOrder[this.currentTurn];
+    if (activeToken) {
+      this.pixiService.highlightToken(activeToken.tokenId);
+    }
+  }
+
+  addToInitiative(token: Token) {
+    if (!this.isGM) return;
+    const exists = this.initiativeOrder.find(e => e.tokenId === token.id);
+    if (exists) return;
+
+    const newOrder = [...this.initiativeOrder, {
+      tokenId: token.id,
+      name: token.name || token.label || String(token.id),
+      image: token.image || null,
+      color: token.color
+    }];
+    this.socket.emit('update-initiative-order', { roomId: this.roomId, initiativeOrder: newOrder });
+  }
+
 }

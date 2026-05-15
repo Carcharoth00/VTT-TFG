@@ -59,17 +59,15 @@
       </button>
     </div>
 
-    <!-- <div class="control-section">
-      <h3>Zoom</h3>
-      <div class="zoom-controls">
-        <button (click)="zoomOut()" class="btn-zoom">−</button>
-        <input type="number" class="zoom-input" [value]="(zoomLevel * 100).toFixed(0)" (change)="setZoom($event)"
-          min="50" max="300" step="20">
-        <span class="zoom-unit">%</span>
-        <button (click)="zoomIn()" class="btn-zoom">+</button>
-      </div>
-      <button (click)="resetZoom()" class="btn-reset">Resetear Zoom</button>
-    </div> -->
+    <div class="control-section" *ngIf="isGM">
+      <h3>⚔️ Combate</h3>
+      <button *ngIf="!combatActive" (click)="startCombat()" class="btn-upload">
+        ⚔️ Iniciar combate
+      </button>
+      <button *ngIf="combatActive" (click)="endCombat()" class="btn-danger">
+        🏳️ Terminar combate
+      </button>
+    </div>
 
     <div class="control-section">
       <h3>Fondo del Tablero</h3>
@@ -114,6 +112,28 @@
   <main #tabletopMain class="tabletop-main">
     <canvas #pixiCanvas class="pixi-canvas"></canvas>
   </main>
+
+  <div class="initiative-bar" *ngIf="combatActive">
+    <div class="initiative-info">
+      <span class="round-counter">Ronda {{ currentRound }}</span>
+      <span class="turn-counter">{{ currentTurn + 1 }}/{{ initiativeOrder.length }}</span>
+    </div>
+    <button class="initiative-prev" (click)="prevTurn()" *ngIf="isGM">◀</button>
+
+    <div class="initiative-tokens" cdkDropList cdkDropListOrientation="horizontal"
+      (cdkDropListDropped)="onInitiativeReorder($event)">
+      <div class="initiative-token" *ngFor="let entry of initiativeOrder; let i = index" cdkDrag
+        [cdkDragDisabled]="!isGM" [class.active-turn]="i === currentTurn">
+        <img *ngIf="entry.image" [src]="entry.image" class="initiative-avatar" alt="token" />
+        <div *ngIf="!entry.image" class="initiative-placeholder" [style.backgroundColor]="entry.color">
+          {{ entry.name.charAt(0) }}
+        </div>
+        <span class="initiative-name">{{ entry.name }}</span>
+      </div>
+    </div>
+
+    <button class="initiative-next" (click)="nextTurn()" *ngIf="isGM">▶</button>
+  </div>
 
   <button class="panel-toggle right-toggle" (click)="showRightPanel = !showRightPanel">
     {{ showRightPanel ? '▶' : '◀' }}

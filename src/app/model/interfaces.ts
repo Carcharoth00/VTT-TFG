@@ -41,4 +41,8 @@ export interface RoomState {
   zoomLevel: number;
   chatMessages: ChatMessage[];
   freeMovement: boolean;
+  combatActive: boolean;
+  initiativeOrder: any[];
+  currentTurn: number;
+  currentRound: number;
 }

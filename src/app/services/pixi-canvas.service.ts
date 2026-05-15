@@ -16,6 +16,7 @@ export class PixiCanvasService {
     private tokenListeners: Map<number, { onPointerMove: Function, onPointerUp: Function }> = new Map();
     private isDraggingAny = false;
     private freeMovement = false;
+    private activeHighlight: PIXI.Graphics | null = null;
 
     private runWhenReady(fn: () => void) {
         if (this.isReady) {
@@ -356,6 +357,7 @@ export class PixiCanvasService {
         onLock: () => void,
         onDelete: () => void,
         onCondition: (conditionId: string) => void,
+        onAddToInitiative?: () => void,
         conditions: { id: string, icon: string }[]
     }) {
         this.hideTokenMenu();
@@ -366,7 +368,8 @@ export class PixiCanvasService {
 
         const btnSize = 32;
         const gap = 4;
-        const allBtns = isGM ? 2 + callbacks.conditions.length : 1 + callbacks.conditions.length;
+        const extraBtns = callbacks.onAddToInitiative ? 1 : 0;
+        const allBtns = isGM ? 2 + extraBtns + callbacks.conditions.length : 1 + callbacks.conditions.length;
         const menuWidth = allBtns * (btnSize + gap) - gap;
 
         const bg = new PIXI.Graphics();
@@ -391,6 +394,15 @@ export class PixiCanvasService {
         }, 0xef4444);
         menu.addChild(deleteBtn);
         btnX += btnSize + gap;
+
+        if (callbacks.onAddToInitiative) {
+            const initiativeBtn = this.createMenuButton('⚔️', btnX, 0, btnSize, () => {
+                callbacks.onAddToInitiative!();
+                this.hideTokenMenu();
+            }, 0x10b981);
+            menu.addChild(initiativeBtn);
+            btnX += btnSize + gap;
+        }
 
         for (const cond of callbacks.conditions) {
             const active = token.conditions?.includes(cond.id);
@@ -433,7 +445,9 @@ export class PixiCanvasService {
         btn.on('pointerover', () => {
             bg.clear();
             bg.roundRect(0, 0, size, size, 6);
-            bg.fill({ color: bgColor === 0xef4444 ? 0xdc2626 : 0x3b82f6 });
+            const hoverColor = bgColor === 0xef4444 ? 0xdc2626 :
+                bgColor === 0x10b981 ? 0x059669 : 0x3b82f6;
+            bg.fill({ color: hoverColor });
         });
 
         btn.on('pointerout', () => {
@@ -500,5 +514,34 @@ export class PixiCanvasService {
 
     setFreeMovement(free: boolean) {
         this.freeMovement = free;
+    }
+
+    highlightToken(tokenId: number) {
+        // Eliminar highlight anterior
+        if (this.activeHighlight) {
+            this.worldContainer.removeChild(this.activeHighlight);
+            this.activeHighlight.destroy();
+            this.activeHighlight = null;
+        }
+
+        const container = this.tokenSprites.get(tokenId);
+        if (!container) return;
+
+        const highlight = new PIXI.Graphics();
+        highlight.roundRect(-3, -3, this.gridSize + 6, this.gridSize + 6, 10);
+        highlight.stroke({ width: 3, color: 0xf59e0b });
+        highlight.x = container.x;
+        highlight.y = container.y;
+
+        this.activeHighlight = highlight;
+        this.worldContainer.addChildAt(highlight, this.worldContainer.children.indexOf(this.tokensContainer));
+    }
+
+    clearHighlight() {
+        if (this.activeHighlight) {
+            this.worldContainer.removeChild(this.activeHighlight);
+            this.activeHighlight.destroy();
+            this.activeHighlight = null;
+        }
     }
 }

@@ -11,7 +11,11 @@ function getOrCreateRoom(roomId) {
       backgroundImage: null,
       zoomLevel: 1,
       chatMessages: [],
-      freeMovement: false,  // añade esto
+      freeMovement: false,
+      combatActive: false,
+      initiativeOrder: [],
+      currentTurn: 0,
+      currentRound: 1,
       users: new Map()
     });
   }
@@ -83,7 +87,11 @@ function setupSocketHandlers(io) {
         backgroundImage: room.backgroundImage,
         zoomLevel: room.zoomLevel,
         chatMessages: room.chatMessages,
-        freeMovement: room.freeMovement || false
+        freeMovement: room.freeMovement || false,
+        combatActive: room.combatActive || false,
+        initiativeOrder: room.initiativeOrder || [],
+        currentTurn: room.currentTurn || 0,
+        currentRound: room.currentRound || 1,
       });
 
       socket.on('toggle-free-movement', ({ roomId, freeMovement }) => {
@@ -284,6 +292,77 @@ function setupSocketHandlers(io) {
           }
         }
         io.to(roomId).emit('token-conditions-updated', { tokenId, conditions });
+      }
+    });
+
+    socket.on('start-combat', ({ roomId, initiativeOrder }) => {
+      const room = rooms.get(roomId);
+      if (room) {
+        room.combatActive = true;
+        room.initiativeOrder = initiativeOrder;
+        room.currentTurn = 0;
+        room.currentRound = 1;
+        io.to(roomId).emit('combat-updated', {
+          combatActive: true,
+          initiativeOrder: room.initiativeOrder,
+          currentTurn: room.currentTurn
+        });
+      }
+    });
+
+    socket.on('end-combat', ({ roomId }) => {
+      const room = rooms.get(roomId);
+      if (room) {
+        room.combatActive = false;
+        room.initiativeOrder = [];
+        room.currentTurn = 0;
+        io.to(roomId).emit('combat-updated', {
+          combatActive: false,
+          initiativeOrder: [],
+          currentTurn: 0
+        });
+      }
+    });
+
+    socket.on('next-turn', ({ roomId }) => {
+      const room = rooms.get(roomId);
+      if (room && room.combatActive) {
+        const wasLast = room.currentTurn === room.initiativeOrder.length - 1;
+        room.currentTurn = (room.currentTurn + 1) % room.initiativeOrder.length;
+        if (wasLast) room.currentRound++;
+        io.to(roomId).emit('combat-updated', {
+          combatActive: true,
+          initiativeOrder: room.initiativeOrder,
+          currentTurn: room.currentTurn,
+          currentRound: room.currentRound
+        });
+      }
+    });
+
+    socket.on('prev-turn', ({ roomId }) => {
+      const room = rooms.get(roomId);
+      if (room && room.combatActive) {
+        const wasFirst = room.currentTurn === 0;
+        room.currentTurn = (room.currentTurn - 1 + room.initiativeOrder.length) % room.initiativeOrder.length;
+        if (wasFirst && room.currentRound > 1) room.currentRound--;
+        io.to(roomId).emit('combat-updated', {
+          combatActive: true,
+          initiativeOrder: room.initiativeOrder,
+          currentTurn: room.currentTurn,
+          currentRound: room.currentRound
+        });
+      }
+    });
+
+    socket.on('update-initiative-order', ({ roomId, initiativeOrder }) => {
+      const room = rooms.get(roomId);
+      if (room) {
+        room.initiativeOrder = initiativeOrder;
+        io.to(roomId).emit('combat-updated', {
+          combatActive: room.combatActive,
+          initiativeOrder: room.initiativeOrder,
+          currentTurn: room.currentTurn
+        });
       }
     });
 
