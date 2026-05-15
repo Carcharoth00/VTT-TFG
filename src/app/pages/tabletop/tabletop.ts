@@ -507,32 +507,21 @@ export class Tabletop implements OnInit, OnDestroy {
   // CDK Drag Drop Event
   onTokenDragEnded(event: CdkDragEnd, token: Token) {
     const scaledGridSize = this.getScaledGridSize();
-    const distance = event.distance;
+    const { x: deltaX, y: deltaY } = event.distance;
 
-    // Calcular nueva posición basada en el desplazamiento
-    const deltaX = distance.x;
-    const deltaY = distance.y;
+    let newX = Math.round((token.x * scaledGridSize + deltaX) / scaledGridSize);
+    let newY = Math.round((token.y * scaledGridSize + deltaY) / scaledGridSize);
 
-    // Calcular nueva posición en celdas
-    const currentPixelX = token.x * scaledGridSize;
-    const currentPixelY = token.y * scaledGridSize;
-
-    const newPixelX = currentPixelX + deltaX;
-    const newPixelY = currentPixelY + deltaY;
-
-    // Convertir a coordenadas de celda
-    let newX = Math.round(newPixelX / scaledGridSize);
-    let newY = Math.round(newPixelY / scaledGridSize);
-
-    // Limitar a los bordes de la cuadrícula
     newX = Math.max(0, Math.min(newX, this.gridColumns - 1));
     newY = Math.max(0, Math.min(newY, this.gridRows - 1));
 
-    // Actualizar posición del token
     token.x = newX;
     token.y = newY;
 
-    // Emitir actualización
+    // Resetear el transform interno de CDK para que el próximo drag arranque desde (0,0)
+    // relativo a la posición CSS (left/top) del token.
+    event.source.setFreeDragPosition({ x: 0, y: 0 });
+
     if (this.isConnected) {
       this.socket.emit('move-token', {
         roomId: this.roomId,
