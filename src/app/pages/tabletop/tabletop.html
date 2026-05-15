@@ -107,24 +107,6 @@
 
   <main #tabletopMain class="tabletop-main">
     <canvas #pixiCanvas class="pixi-canvas"></canvas>
-    <div class="token-context-menu" *ngIf="activeTokenMenu !== null" [style.left.px]="tokenMenuPosition.x"
-      [style.top.px]="tokenMenuPosition.y - 80" (click)="$event.stopPropagation()">
-
-      <div class="token-controls-top">
-        <button *ngIf="isGM" (click)="toggleTokenLockById(activeTokenMenu!)" class="token-ctrl-btn">
-          {{ getTokenById(activeTokenMenu!)?.locked ? '🔒' : '🔓' }}
-        </button>
-        <button (click)="removeToken(activeTokenMenu!); activeTokenMenu = null"
-          class="token-ctrl-btn token-ctrl-delete">×</button>
-      </div>
-      <div class="token-controls-bottom">
-        <button *ngFor="let cond of CONDITIONS" (click)="toggleConditionById(activeTokenMenu!, cond.id, $event)"
-          class="token-ctrl-btn"
-          [class.condition-active]="getTokenById(activeTokenMenu!)?.conditions?.includes(cond.id)" [title]="cond.label">
-          {{ cond.icon }}
-        </button>
-      </div>
-    </div>
   </main>
 
   <button class="panel-toggle right-toggle" (click)="showRightPanel = !showRightPanel">

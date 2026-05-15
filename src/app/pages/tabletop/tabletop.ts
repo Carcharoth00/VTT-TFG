@@ -1,7 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CdkDragDrop, DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { io, Socket } from 'socket.io-client';
 import { Router } from '@angular/router';
 import { Token, GridConfig, ChatMessage, DiceRoll, RoomState } from "../../model/interfaces";
@@ -14,26 +13,25 @@ import { GameService, Game } from '../../services/game.service';
 import { NotesComponent } from '../notes/notes';
 import { Character, CharacterService } from '../../services/character.service';
 import { LibraryItem, LibraryService } from '../../services/library.service';
-import { AfterViewInit } from '@angular/core';
 import { PixiCanvasService } from '../../services/pixi-canvas.service';
 
 @Component({
   selector: 'app-tabletop',
   standalone: true,
-  imports: [CommonModule, FormsModule, DragDropModule, CharactersComponent, NotesComponent],
+  imports: [CommonModule, FormsModule, CharactersComponent, NotesComponent],
   templateUrl: './tabletop.html',
   styleUrl: './tabletop.css',
 })
 export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('pixiCanvas') pixiCanvas!: ElementRef<HTMLCanvasElement>;
 
-  //Usuarios
+  // Usuarios
   connectedUsers: { username: string, userId: number, role: string }[] = [];
   currentGame: Game | null = null;
   isGM = false;
   copiedToClipboard = false;
 
-  //Libreria
+  // Librería
   libraryImages: LibraryItem[] = [];
   selectedLibraryImage: { name: string, image: string } | null = null;
 
@@ -42,25 +40,16 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   gridColumns = 10;
   gridRows = 10;
   backgroundImage: string | null = null;
-  zoomLevel = 1;
-  panX = 0;
-  panY = 0;
   showGrid = true;
-  private isPanning = false;
-  private lastMouseX = 0;
-  private lastMouseY = 0;
 
   // Tokens
   tokens: Token[] = [];
-  nextTokenId = 1;
   showTokenModal = false;
   myCharacters: Character[] = [];
   newTokenImage: string | null = null;
   newTokenName: string = '';
   newTokenColor: string = '#FF0000';
   selectedCharacterId: number | null = null;
-  activeTokenMenu: number | null = null;
-  tokenMenuPosition = { x: 0, y: 0 };
 
   // Socket.IO
   private socket!: Socket;
@@ -76,7 +65,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   showRightPanel = true;
   unreadMessages = 0;
 
-  //Map
+  // Map
   maps: GameMap[] = [];
   activeMapId: number | null = null;
 
@@ -84,6 +73,23 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   Math = Math;
   diceModifier = 0;
   showDiceBuilder = false;
+  diceBuilder = [
+    { label: 'd4', sides: 4, count: 0 },
+    { label: 'd6', sides: 6, count: 0 },
+    { label: 'd8', sides: 8, count: 0 },
+    { label: 'd10', sides: 10, count: 0 },
+    { label: 'd12', sides: 12, count: 0 },
+    { label: 'd20', sides: 20, count: 0 },
+  ];
+
+  readonly CONDITIONS = [
+    { id: 'dead', icon: '💀', label: 'Muerto' },
+    { id: 'unconscious', icon: '😴', label: 'Inconsciente' },
+    { id: 'poisoned', icon: '🤢', label: 'Envenenado' },
+    { id: 'burning', icon: '🔥', label: 'En llamas' },
+    { id: 'stunned', icon: '⚡', label: 'Aturdido' },
+    { id: 'protected', icon: '🛡️', label: 'Protegido' },
+  ];
 
   constructor(
     private cdr: ChangeDetectorRef,
@@ -95,9 +101,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     private characterService: CharacterService,
     private libraryService: LibraryService,
     private pixiService: PixiCanvasService
-  ) {
-    console.log('✅ Tabletop constructor - Router inyectado:', !!this.router);
-  }
+  ) { }
 
   async ngAfterViewInit() {
     const canvas = this.pixiCanvas.nativeElement;
@@ -116,46 +120,29 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     };
 
     this.pixiService.onTokenClick = (tokenId) => {
-      if (this.activeTokenMenu === tokenId) {
-        this.activeTokenMenu = null;
-      } else {
-        this.activeTokenMenu = tokenId;
-        const token = this.tokens.find(t => t.id === tokenId);
-        if (token) {
-          const pos = this.getTokenScreenPosition(token);
-          this.tokenMenuPosition = pos;
-        }
+      const token = this.tokens.find(t => t.id === tokenId);
+      if (token) {
+        this.pixiService.showTokenMenu(token, this.isGM, {
+          onLock: () => this.toggleTokenLock(token),
+          onDelete: () => this.removeToken(token.id),
+          onCondition: (conditionId) => {
+            const fakeEvent = new MouseEvent('click');
+            this.toggleCondition(token, conditionId, fakeEvent);
+          },
+          conditions: this.CONDITIONS
+        });
       }
       this.cdr.detectChanges();
     };
-
-    // Centrar
-    const viewportWidth = parent.clientWidth;
-    const viewportHeight = parent.clientHeight;
-    this.panX = (viewportWidth - this.gridColumns * this.gridSize) / 2;
-    this.panY = (viewportHeight - this.gridRows * this.gridSize) / 2;
   }
 
   ngOnInit() {
     window.addEventListener('keydown', this.handleKeyboard);
-    document.addEventListener('click', (e) => {
-      const menu = document.querySelector('.token-context-menu');
-      const canvas = document.querySelector('.pixi-canvas');
-      if (canvas && canvas.contains(e.target as Node)) return;
-      if (menu && !menu.contains(e.target as Node)) {
-        this.activeTokenMenu = null;
-        this.cdr.detectChanges();
-      }
-    });
     this.authService.currentUser$.subscribe(user => {
       if (user && !this.isConnected) {
         this.username = user.username;
         this.route.params.subscribe(params => {
           this.roomId = params['id'];
-          const viewportWidth = window.innerWidth - 600; // restar paneles laterales aprox
-          const viewportHeight = window.innerHeight;
-          this.panX = (viewportWidth - this.gridColumns * this.gridSize) / 2;
-          this.panY = (viewportHeight - this.gridRows * this.gridSize) / 2;
           this.libraryService.getItems(+this.roomId).subscribe({
             next: (response) => {
               this.libraryImages = response.items;
@@ -184,7 +171,6 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
                 this.gridRows = response.map.grid_rows || 15;
                 this.gridSize = response.map.grid_size || 50;
                 this.pixiService.setGridConfig(this.gridColumns, this.gridRows, this.gridSize);
-
                 this.mapService.getMapImage(response.map.id).subscribe({
                   next: (img) => {
                     this.backgroundImage = img.image;
@@ -203,13 +189,10 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy() {
     if (this.socket) {
       this.socket.disconnect();
-      window.removeEventListener('keydown', this.handleKeyboard);
-      this.pixiService.destroy();
     }
+    window.removeEventListener('keydown', this.handleKeyboard);
+    this.pixiService.destroy();
   }
-
-
-  // ========== SOCKET.IO ==========
 
   private connectToRoom() {
     this.socket.connect();
@@ -219,27 +202,23 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       userId: this.authService.getCurrentUser()?.id
     });
   }
+
   private initializeSocket() {
-    // Conectar al servidor Socket.IO (ajusta la URL según tu backend)
     this.socket = io(environment.socketUrl, {
       transports: ['websocket'],
       autoConnect: false,
     });
 
-    // Eventos de conexión
     this.socket.on('connect', () => {
-      console.log('Conectado al servidor Socket.IO');
       this.isConnected = true;
       this.cdr.markForCheck();
     });
 
     this.socket.on('disconnect', () => {
-      console.log('Desconectado del servidor');
       this.isConnected = false;
       this.cdr.markForCheck();
     });
 
-    // Recibir estado inicial de la sala
     this.socket.on('room-state', (state: RoomState) => {
       this.tokens = state.tokens || [];
       if (state.gridConfig) {
@@ -250,19 +229,14 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       }
       this.backgroundImage = state.backgroundImage || null;
       this.chatMessages = state.chatMessages || [];
-
-      // Añadir tokens al canvas
       this.pixiService.clearTokens();
       this.tokens.forEach(t => this.pixiService.addToken(t, this.isGM));
-
       if (this.backgroundImage) {
         this.pixiService.setBackground(this.backgroundImage);
       }
-
       this.cdr.markForCheck();
     });
 
-    // Sincronizar tokens
     this.socket.on('token-added', (token: Token) => {
       const exists = this.tokens.find(t => t.id === token.id);
       if (!exists) {
@@ -288,11 +262,11 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       this.cdr.markForCheck();
     });
 
-    // Sincronizar configuración
     this.socket.on('grid-updated', (config: GridConfig) => {
       this.gridSize = config.size;
       this.gridColumns = config.columns;
       this.gridRows = config.rows;
+      this.pixiService.setGridConfig(config.columns, config.rows, config.size);
       this.cdr.markForCheck();
     });
 
@@ -312,7 +286,6 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       }
     });
 
-    // ================ Chat events ===============
     this.socket.on('chat-message', (message: ChatMessage) => {
       this.chatMessages.push(message);
       if (this.activePanel !== 'chat') this.unreadMessages++;
@@ -320,9 +293,9 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       this.scrollChatToBottom();
     });
 
-    // =============== DADOS ================
     this.socket.on('dice-rolled', (message: ChatMessage) => {
       this.chatMessages.push(message);
+      if (this.activePanel !== 'chat') this.unreadMessages++;
       this.cdr.markForCheck();
       this.scrollChatToBottom();
     });
@@ -342,6 +315,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       const token = this.tokens.find(t => t.id === data.tokenId);
       if (token) {
         token.locked = data.locked;
+        this.pixiService.updateTokenLocked(data.tokenId, data.locked);
         this.cdr.markForCheck();
       }
     });
@@ -350,93 +324,42 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       const token = this.tokens.find(t => t.id === data.tokenId);
       if (token) {
         token.conditions = data.conditions;
+        this.pixiService.updateTokenConditions(data.tokenId, data.conditions);
         this.cdr.markForCheck();
       }
     });
   }
 
-  joinRoom() {
-    if (this.roomId.trim() && this.username.trim()) {
-      this.socket.connect();
-      this.socket.emit('join-room', { roomId: this.roomId, username: this.username });
-    }
-  }
-
   leaveRoom() {
-    console.log('🔴 leaveRoom() llamado');
-    console.log('🔴 Router disponible:', !!this.router);
-
     if (this.roomId) {
       this.socket.emit('leave-room', this.roomId);
       this.socket.disconnect();
       this.roomId = '';
       this.isConnected = false;
-
-      console.log('🔴 Intentando navegar a /dashboard...');
-
-      // Navegación con promesa para debug
-      this.router.navigate(['/dashboard']).then(
-        success => console.log('✅ Navegación exitosa:', success),
-        error => console.error('❌ Error en navegación:', error)
-      );
+      this.router.navigate(['/dashboard']);
     } else {
-      console.warn('⚠️ No hay roomId, navegando de todos modos...');
       this.router.navigate(['/dashboard']);
     }
   }
 
   goBack() {
-    console.log('🔴 goBack() llamado');
-
-    // Confirmar antes de salir
-    const confirmLeave = confirm('¿Seguro que quieres salir de la sala?');
-    console.log('🔴 Confirmación del usuario:', confirmLeave);
-
-    if (confirmLeave) {
-      console.log('🔴 Usuario confirmó, llamando a leaveRoom()');
+    if (confirm('¿Seguro que quieres salir de la sala?')) {
       this.leaveRoom();
-
-      // Limpiar datos locales
       this.tokens = [];
       this.chatMessages = [];
       this.backgroundImage = null;
-      this.zoomLevel = 1;
-
-      console.log('🔴 Datos locales limpiados');
-    } else {
-      console.log('🔴 Usuario canceló la salida');
     }
   }
-
-  // ========== GRID & ZOOM ==========
-  /* updateGridDimensions() {
-    console.log(`Grid actualizado: ${this.gridColumns}x${this.gridRows}, tamaño celda: ${this.gridSize}px`);
-
-    if (this.isConnected) {
-      const config: GridConfig = {
-        size: this.gridSize,
-        columns: this.gridColumns,
-        rows: this.gridRows,
-      };
-      this.socket.emit('update-grid', { roomId: this.roomId, config });
-    }
-  } */
-
-  // ========== BACKGROUND IMAGE ==========
 
   onImageUpload(event: any) {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = (e: any) => {
       const imageData = e.target.result;
       const mapName = file.name.replace(/\.[^/.]+$/, '');
-
       this.mapService.uploadMap(
-        +this.roomId,
-        mapName,
-        imageData,
+        +this.roomId, mapName, imageData,
         { cols: this.gridColumns, rows: this.gridRows, size: this.gridSize }
       ).subscribe({
         next: (response) => {
@@ -456,12 +379,10 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
         this.mapService.getMapImage(mapId).subscribe({
           next: (response) => {
             this.backgroundImage = response.image;
+            this.pixiService.setBackground(response.image);
             this.cdr.detectChanges();
             if (this.isConnected) {
-              this.socket.emit('update-background', {
-                roomId: this.roomId,
-                mapId: mapId
-              });
+              this.socket.emit('update-background', { roomId: this.roomId, mapId });
             }
           }
         });
@@ -471,23 +392,15 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
 
   removeBackground() {
     this.backgroundImage = null;
+    this.pixiService.setBackground(null);
     if (this.isConnected) {
-      this.socket.emit('update-background', {
-        roomId: this.roomId,
-        image: null,
-      });
+      this.socket.emit('update-background', { roomId: this.roomId, image: null });
     }
   }
 
-  // ========== TOKENS (CDK Drag & Drop) ==========
-  getTokenScreenPosition(token: Token): { x: number, y: number } {
-    const scale = this.pixiService.getScale();
-    const worldPos = this.pixiService.getWorldPosition();
-
-    return {
-      x: worldPos.x + token.x * this.gridSize * scale,
-      y: worldPos.y + token.y * this.gridSize * scale
-    };
+  toggleGrid() {
+    this.showGrid = !this.showGrid;
+    this.pixiService.toggleGrid(this.showGrid);
   }
 
   addToken() {
@@ -496,14 +409,13 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     this.newTokenColor = '#FF0000';
     this.selectedCharacterId = null;
     this.showTokenModal = true;
-    this.cdr.detectChanges();
-
     this.characterService.getMyCharacters(+this.roomId).subscribe({
       next: (response) => {
         this.myCharacters = response.characters;
         this.cdr.detectChanges();
       }
     });
+    this.cdr.detectChanges();
   }
 
   selectCharacterForToken(character: Character) {
@@ -526,17 +438,14 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
 
   confirmAddToken() {
     if (!this.isConnected) return;
-
     const token = {
-      x: 0,
-      y: 0,
+      x: 0, y: 0,
       color: this.newTokenColor,
       label: this.newTokenName || `T${Date.now() % 1000}`,
       image: this.newTokenImage,
       name: this.newTokenName || null,
       character_id: this.selectedCharacterId
     };
-
     this.socket.emit('add-token', { roomId: this.roomId, token });
     this.showTokenModal = false;
     this.cdr.detectChanges();
@@ -544,96 +453,26 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
 
   removeToken(id: number) {
     this.tokens = this.tokens.filter(t => t.id !== id);
-
+    this.pixiService.removeToken(id);
     if (this.isConnected) {
       this.socket.emit('remove-token', { roomId: this.roomId, tokenId: id });
     }
   }
 
-  toggleTokenMenu(tokenId: number, event: MouseEvent) {
-    event.stopPropagation();
-    this.activeTokenMenu = this.activeTokenMenu === tokenId ? null : tokenId;
-    this.cdr.detectChanges();
+  toggleTokenLock(token: Token) {
+    if (!this.isGM) return;
+    const locked = !token.locked;
+    this.socket.emit('toggle-lock', { roomId: this.roomId, tokenId: token.id, locked });
   }
-
-  getTokenById(tokenId: number): Token | undefined {
-    return this.tokens.find(t => t.id === tokenId);
-  }
-
-  toggleTokenLockById(tokenId: number) {
-    const token = this.tokens.find(t => t.id === tokenId);
-    if (token) this.toggleTokenLock(token);
-  }
-
-  toggleConditionById(tokenId: number, conditionId: string, event: MouseEvent) {
-    const token = this.tokens.find(t => t.id === tokenId);
-    if (token) this.toggleCondition(token, conditionId, event);
-  }
-
-  // CDK Drag Drop Event
-  onTokenDragEnded(event: CdkDragEnd, token: Token) {
-    const distance = event.distance;
-
-    // La distancia viene en coordenadas de pantalla, convertir a coordenadas de canvas
-    const deltaX = distance.x / this.zoomLevel;
-    const deltaY = distance.y / this.zoomLevel;
-
-    const currentPixelX = token.x * this.gridSize;
-    const currentPixelY = token.y * this.gridSize;
-
-    const newPixelX = currentPixelX + deltaX;
-    const newPixelY = currentPixelY + deltaY;
-
-    let newX = Math.round(newPixelX / this.gridSize);
-    let newY = Math.round(newPixelY / this.gridSize);
-
-    newX = Math.max(0, Math.min(newX, this.gridColumns - 1));
-    newY = Math.max(0, Math.min(newY, this.gridRows - 1));
-
-    token.x = newX;
-    token.y = newY;
-
-    if (this.isConnected) {
-      this.socket.emit('move-token', {
-        roomId: this.roomId,
-        tokenId: token.id,
-        x: newX,
-        y: newY,
-      });
-    }
-
-    this.cdr.markForCheck();
-  }
-
-  // Obtener el ID del token para el trackBy
-  trackByTokenId(index: number, token: Token): number {
-    return token.id;
-  }
-
-  // Generar array para la cuadrícula
-  getGridCells(): number[] {
-    return Array(this.gridColumns * this.gridRows).fill(0).map((_, i) => i);
-  }
-
-  readonly CONDITIONS = [
-    { id: 'dead', icon: '💀', label: 'Muerto' },
-    { id: 'unconscious', icon: '😴', label: 'Inconsciente' },
-    { id: 'poisoned', icon: '🤢', label: 'Envenenado' },
-    { id: 'burning', icon: '🔥', label: 'En llamas' },
-    { id: 'stunned', icon: '⚡', label: 'Aturdido' },
-    { id: 'protected', icon: '🛡️', label: 'Protegido' },
-  ];
 
   toggleCondition(token: Token, conditionId: string, event: MouseEvent) {
     event.stopPropagation();
     const conditions: string[] = token.conditions ? [...token.conditions] : [];
     const index = conditions.indexOf(conditionId);
-    if (index === -1) {
-      conditions.push(conditionId);
-    } else {
-      conditions.splice(index, 1);
-    }
+    if (index === -1) conditions.push(conditionId);
+    else conditions.splice(index, 1);
     token.conditions = conditions;
+    this.pixiService.updateTokenConditions(token.id, conditions);
     this.socket.emit('update-conditions', { roomId: this.roomId, tokenId: token.id, conditions });
     this.cdr.detectChanges();
   }
@@ -642,15 +481,10 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     return this.CONDITIONS.find(c => c.id === conditionId)?.icon || '';
   }
 
-  // ========== CHAT ==========
-
   sendMessage() {
     if (!this.newMessage.trim() || !this.isConnected) return;
-
-    // Verificar si es un comando de dado (ej: /roll 2d6+3, /r d20)
     const diceRegex = /^\/r(?:oll)?\s+(.+)$/i;
     const match = this.newMessage.trim().match(diceRegex);
-
     if (match) {
       this.rollDice(match[1].trim());
     } else {
@@ -662,23 +496,19 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
         timestamp: new Date(),
         type: 'message',
       };
-
       this.socket.emit('send-message', { roomId: this.roomId, message });
     }
-
     this.newMessage = '';
   }
 
   rollDice(formula: string) {
     const diceRoll = this.parseDiceFormula(formula);
-
     if (!diceRoll) {
-      // Fórmula inválida
       const errorMessage: ChatMessage = {
         id: Date.now().toString(),
         userId: 'system',
         username: 'Sistema',
-        message: `Fórmula de dados inválida: ${formula}. Usa formato como "2d6+3", "d20", "3d8-2"`,
+        message: `Fórmula inválida: ${formula}`,
         timestamp: new Date(),
         type: 'system',
       };
@@ -686,7 +516,6 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       this.scrollChatToBottom();
       return;
     }
-
     const message: ChatMessage = {
       id: Date.now().toString(),
       userId: this.socket.id || '',
@@ -696,7 +525,6 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       type: 'dice',
       diceRoll,
     };
-
     this.socket.emit('roll-dice', { roomId: this.roomId, message });
   }
 
@@ -705,27 +533,19 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   }
 
   parseDiceFormula(formula: string): DiceRoll | null {
-    // Acepta: 2d6+1d8+3, d20, 3d8-2, 4d6, 2d6+1d4-1
     const cleanFormula = formula.trim().toLowerCase();
-
     const individualDice: { sides: number; result: number }[] = [];
     let total = 0;
     let modifier = 0;
-
-    // Separar en partes por + y -
     const parts = cleanFormula.split(/(?=[+\-])/);
-
     for (const part of parts) {
       const diceMatch = part.match(/^([+\-]?)(\d*)d(\d+)$/i);
       const modMatch = part.match(/^([+\-]?\d+)$/);
-
       if (diceMatch) {
         const sign = diceMatch[1] === '-' ? -1 : 1;
         const count = diceMatch[2] ? parseInt(diceMatch[2]) : 1;
         const sides = parseInt(diceMatch[3]);
-
         if (count < 1 || count > 100 || sides < 2 || sides > 1000) return null;
-
         for (let i = 0; i < count; i++) {
           const result = Math.floor(Math.random() * sides) + 1;
           individualDice.push({ sides, result: result * sign });
@@ -737,11 +557,8 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
         return null;
       }
     }
-
     if (individualDice.length === 0) return null;
-
     total += modifier;
-
     return {
       formula,
       results: individualDice.map(d => d.result),
@@ -754,22 +571,11 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     return Math.max(0, n);
   }
 
-  diceBuilder = [
-    { label: 'd4', sides: 4, count: 0 },
-    { label: 'd6', sides: 6, count: 0 },
-    { label: 'd8', sides: 8, count: 0 },
-    { label: 'd10', sides: 10, count: 0 },
-    { label: 'd12', sides: 12, count: 0 },
-    { label: 'd20', sides: 20, count: 0 },
-  ];
-
   rollDiceBuilder() {
     const activeDice = this.diceBuilder.filter(d => d.count > 0);
     if (activeDice.length === 0) return;
-
     const individualDice: { sides: number, result: number }[] = [];
     let total = this.diceModifier;
-
     for (const die of activeDice) {
       for (let i = 0; i < die.count; i++) {
         const result = Math.floor(Math.random() * die.sides) + 1;
@@ -777,10 +583,8 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
         total += result;
       }
     }
-
     const formula = activeDice.map(d => `${d.count}${d.label}`).join('+')
       + (this.diceModifier !== 0 ? (this.diceModifier > 0 ? '+' : '') + this.diceModifier : '');
-
     const message: ChatMessage = {
       id: Date.now().toString(),
       userId: this.socket.id || '',
@@ -790,7 +594,6 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       type: 'dice',
       diceRoll: { formula, results: individualDice.map(d => d.result), total, individualDice }
     };
-
     this.socket.emit('roll-dice', { roomId: this.roomId, message });
   }
 
@@ -802,22 +605,13 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   private scrollChatToBottom() {
     setTimeout(() => {
       const chatContainer = document.querySelector('.chat-messages');
-      if (chatContainer) {
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-      }
+      if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
     }, 100);
   }
 
   formatTimestamp(date: Date): string {
     const d = new Date(date);
-    const hours = d.getHours().toString().padStart(2, '0');
-    const minutes = d.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${minutes}`;
-  }
-
-  // Atajos de teclado para dados comunes
-  quickRoll(formula: string) {
-    this.rollDice(formula);
+    return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
   }
 
   onLibraryImageUpload(event: any) {
@@ -865,12 +659,10 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     }
   };
 
-  //Compartir partida
   async shareGame() {
     const code = this.currentGame?.invite_code;
     const url = `${window.location.origin}/join/${code}`;
     const text = `¡Te invito a unirte a mi partida "${this.currentGame?.name}" en VTT!`;
-
     if (navigator.share) {
       try {
         await navigator.share({ title: 'Invitación a partida VTT', text, url });
@@ -900,11 +692,4 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       error: () => console.error('Error cambiando rol')
     });
   }
-
-  toggleTokenLock(token: Token) {
-    if (!this.isGM) return;
-    const locked = !token.locked;
-    this.socket.emit('toggle-lock', { roomId: this.roomId, tokenId: token.id, locked });
-  }
-
 }
