@@ -882,4 +882,43 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     this.socket.emit('update-token-hp', { roomId: this.roomId, tokenId: token.id, hp: newHP });
   }
 
+  handleAttackRoll(event: { attack: any, character: any }) {
+    const { attack, character } = event;
+
+    // Tirada de ataque: d20 + bonificador
+    const attackRoll = Math.floor(Math.random() * 20) + 1;
+    const attackTotal = attackRoll + attack.attackBonus;
+
+    // Tirada de daño
+    const damageRoll = this.parseDiceFormula(attack.damageDice);
+    const damageTotal = damageRoll ? damageRoll.total + attack.damageBonus : 0;
+
+    const isCritical = attackRoll === 20;
+    const isFumble = attackRoll === 1;
+
+    const message: ChatMessage = {
+      id: Date.now().toString(),
+      userId: this.socket.id || '',
+      username: this.username,
+      message: `${character.name} usa ${attack.name}`,
+      timestamp: new Date(),
+      type: 'dice',
+      diceRoll: {
+        formula: `${attack.name}: d20+${attack.attackBonus} ataque, ${attack.damageDice}+${attack.damageBonus} daño`,
+        results: [attackRoll, ...(damageRoll?.results || [])],
+        total: attackTotal,
+        individualDice: [
+          { sides: 20, result: attackRoll },
+          ...(damageRoll?.individualDice || [])
+        ],
+        attackTotal,
+        damageTotal,
+        isCritical,
+        isFumble
+      }
+    };
+
+    this.socket.emit('roll-dice', { roomId: this.roomId, message });
+  }
+
 }

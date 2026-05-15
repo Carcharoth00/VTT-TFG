@@ -33,7 +33,11 @@ export interface DiceRoll {
   formula: string;
   results: number[];
   total: number;
-  individualDice?: { sides: number; result: number }[];
+  individualDice: { sides: number, result: number }[];
+  attackTotal?: number;
+  damageTotal?: number;
+  isCritical?: boolean;
+  isFumble?: boolean;
 }
 
 export interface RoomState {

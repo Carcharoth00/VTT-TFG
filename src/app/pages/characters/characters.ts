@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
+import { Output, EventEmitter } from '@angular/core';
 import { Component, Input, OnInit, ChangeDetectorRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { CharacterService, Character, CharacterStats } from '../../services/character.service';
+import { CharacterService, Character, CharacterStats, CharacterAttack } from '../../services/character.service';
 
 @Component({
   selector: 'app-characters',
@@ -11,7 +12,7 @@ import { CharacterService, Character, CharacterStats } from '../../services/char
   styleUrl: './characters.css'
 })
 export class CharactersComponent implements OnInit {
-
+  @Output() onRollAttack = new EventEmitter<{ attack: CharacterAttack, character: Character }>();
   @Input() gameId!: number;
   @Input() currentUserId!: number;
 
@@ -29,6 +30,7 @@ export class CharactersComponent implements OnInit {
     notes: string;
     avatar: string | null;
     stats: CharacterStats;
+    skills: CharacterAttack[];
   } = {
       name: '',
       hp: 10,
@@ -37,13 +39,10 @@ export class CharactersComponent implements OnInit {
       notes: '',
       avatar: null,
       stats: {
-        fuerza: 10,
-        destreza: 10,
-        constitucion: 10,
-        inteligencia: 10,
-        sabiduria: 10,
-        carisma: 10
-      }
+        fuerza: 10, destreza: 10, constitucion: 10,
+        inteligencia: 10, sabiduria: 10, carisma: 10
+      },
+      skills: []
     };
 
   constructor(
@@ -84,6 +83,7 @@ export class CharactersComponent implements OnInit {
       ac: character.ac,
       notes: character.notes || '',
       avatar: character.avatar || null,
+      skills: character.skills || [],
       stats: character.stats || {
         fuerza: 10, destreza: 10, constitucion: 10,
         inteligencia: 10, sabiduria: 10, carisma: 10
@@ -155,7 +155,8 @@ export class CharactersComponent implements OnInit {
       stats: {
         fuerza: 10, destreza: 10, constitucion: 10,
         inteligencia: 10, sabiduria: 10, carisma: 10
-      }
+      },
+      skills: []
     };
   }
   getStatValue(stats: any, stat: string): number {
@@ -177,5 +178,22 @@ export class CharactersComponent implements OnInit {
   removeAvatar() {
     this.form.avatar = null;
     this.cdr.detectChanges();
+  }
+
+  addAttack() {
+    this.form.skills.push({
+      name: '',
+      attackBonus: 0,
+      damageDice: '1d6',
+      damageBonus: 0
+    });
+  }
+
+  removeAttack(index: number) {
+    this.form.skills.splice(index, 1);
+  }
+
+  rollAttack(attack: CharacterAttack, char: Character) {
+    this.onRollAttack.emit({ attack, character: char });
   }
 }

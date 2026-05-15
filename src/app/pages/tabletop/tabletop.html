@@ -192,13 +192,30 @@
             <span *ngIf="msg.type === 'message'">{{ msg.message }}</span>
             <div *ngIf="msg.type === 'dice' && msg.diceRoll" class="dice-result">
               <div class="dice-formula">🎲 {{ msg.diceRoll.formula }}</div>
+
+              <div *ngIf="msg.diceRoll.attackTotal !== undefined" class="attack-result">
+                <div class="attack-roll-result" [class.critical]="msg.diceRoll.isCritical"
+                  [class.fumble]="msg.diceRoll.isFumble">
+                  <span class="label">Ataque</span>
+                  <strong>{{ msg.diceRoll.attackTotal }}</strong>
+                  <span class="critical-label" *ngIf="msg.diceRoll.isCritical">⭐ CRÍTICO</span>
+                  <span class="fumble-label" *ngIf="msg.diceRoll.isFumble">💀 PIFIA</span>
+                </div>
+                <div class="damage-roll-result">
+                  <span class="label">Daño</span>
+                  <strong>{{ msg.diceRoll.damageTotal }}</strong>
+                </div>
+              </div>
+
               <div class="dice-rolls">
                 <span *ngFor="let die of msg.diceRoll.individualDice" class="die-result"
                   [class.die-critical]="die.result === die.sides" [class.die-fumble]="die.result === 1">
                   {{ die.result }}
                 </span>
               </div>
-              <div class="dice-total">Total: <strong>{{ msg.diceRoll.total }}</strong></div>
+              <div class="dice-total" *ngIf="msg.diceRoll.attackTotal === undefined">
+                Total: <strong>{{ msg.diceRoll.total }}</strong>
+              </div>
             </div>
             <span *ngIf="msg.type === 'system'" class="system-text">ℹ️ {{ msg.message }}</span>
           </div>
@@ -221,7 +238,8 @@
     </div>
 
     <div class="panel-content" *ngIf="activePanel === 'characters'">
-      <app-characters [gameId]="roomId ? +roomId : 0" [currentUserId]="authService.getCurrentUser()?.id || 0">
+      <app-characters [gameId]="roomId ? +roomId : 0" [currentUserId]="authService.getCurrentUser()?.id || 0"
+        (onRollAttack)="handleAttackRoll($event)">
       </app-characters>
     </div>
 

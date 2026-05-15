@@ -14,6 +14,13 @@ export interface CharacterStats {
   carisma: number;
 }
 
+export interface CharacterAttack {
+  name: string;
+  attackBonus: number;
+  damageDice: string;
+  damageBonus: number;
+}
+
 export interface Character {
   id: number;
   user_id: number;
@@ -23,7 +30,7 @@ export interface Character {
   max_hp: number;
   ac: number;
   stats: CharacterStats | null;
-  skills: any | null;
+  skills: CharacterAttack[] | null;
   notes: string | null;
   avatar: string | null;
   created_at: string;
@@ -39,7 +46,7 @@ export class CharacterService {
   constructor(
     private http: HttpClient,
     private authService: AuthService
-  ) {}
+  ) { }
 
   private getHeaders(): HttpHeaders {
     const token = this.authService.getToken();

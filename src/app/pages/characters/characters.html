@@ -15,7 +15,7 @@
     <div class="character-card" *ngFor="let char of characters">
       <div class="character-header">
         <div class="character-name-row">
-          <img *ngIf="char.avatar" [src]="char.avatar" class="character-avatar" alt="avatar"/>
+          <img *ngIf="char.avatar" [src]="char.avatar" class="character-avatar" alt="avatar" />
           <div *ngIf="!char.avatar" class="character-avatar-placeholder">{{ char.name.charAt(0) }}</div>
           <h4>{{ char.name }}</h4>
         </div>
@@ -31,13 +31,24 @@
       </div>
 
       <div class="character-stats" *ngIf="char.stats">
-        <div class="stat" *ngFor="let stat of ['fuerza','destreza','constitucion','inteligencia','sabiduria','carisma']">
+        <div class="stat"
+          *ngFor="let stat of ['fuerza','destreza','constitucion','inteligencia','sabiduria','carisma']">
           <span class="stat-name">{{ stat.slice(0,3).toUpperCase() }}</span>
           <span class="stat-value">{{ getStatValue(char.stats, stat) }}</span>
         </div>
       </div>
 
       <p class="character-notes" *ngIf="char.notes">{{ char.notes }}</p>
+
+      <div class="character-attacks" *ngIf="char.skills && char.skills.length > 0">
+        <h5>⚔️ Ataques</h5>
+        <div class="attack-item" *ngFor="let attack of char.skills">
+          <span class="attack-name">{{ attack.name }}</span>
+          <span class="attack-roll">+{{ attack.attackBonus }} ataque</span>
+          <span class="attack-damage">{{ attack.damageDice }}+{{ attack.damageBonus }} daño</span>
+          <button class="btn-roll-attack" (click)="rollAttack(attack, char)">🎲</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -54,7 +65,7 @@
     <div class="form-group">
       <label>Imagen del personaje</label>
       <div class="avatar-upload">
-        <img *ngIf="form.avatar" [src]="form.avatar" class="avatar-preview" alt="Avatar"/>
+        <img *ngIf="form.avatar" [src]="form.avatar" class="avatar-preview" alt="Avatar" />
         <div *ngIf="!form.avatar" class="avatar-placeholder">Sin imagen</div>
         <div class="avatar-buttons">
           <input type="file" accept="image/*" (change)="onAvatarUpload($event)" #avatarInput style="display:none">
@@ -85,7 +96,8 @@
 
     <h5>Atributos</h5>
     <div class="stats-grid">
-      <div class="form-group" *ngFor="let stat of ['fuerza','destreza','constitucion','inteligencia','sabiduria','carisma']">
+      <div class="form-group"
+        *ngFor="let stat of ['fuerza','destreza','constitucion','inteligencia','sabiduria','carisma']">
         <label>{{ stat }}</label>
         <input type="number" [(ngModel)]="form.stats[stat]" min="1" max="20" />
       </div>
@@ -94,6 +106,19 @@
     <div class="form-group">
       <label>Notas</label>
       <textarea [(ngModel)]="form.notes" placeholder="Trasfondo, equipamiento..."></textarea>
+    </div>
+
+    <h5>⚔️ Ataques y habilidades</h5>
+    <div class="attacks-list">
+      <div class="attack-row" *ngFor="let attack of form.skills; let i = index">
+        <input [(ngModel)]="attack.name" placeholder="Nombre (ej: Espada larga)" class="attack-name" />
+        <input type="number" [(ngModel)]="attack.attackBonus" placeholder="+0" class="attack-bonus" />
+        <input [(ngModel)]="attack.damageDice" placeholder="1d8" class="attack-dice" />
+        <input type="number" [(ngModel)]="attack.damageBonus" placeholder="+0" class="attack-dmg-bonus" />
+        <button (click)="removeAttack(i)" class="btn-delete">🗑️</button>
+      </div>
+      <p *ngIf="form.skills.length === 0" class="empty-msg">Sin ataques añadidos.</p>
+      <button (click)="addAttack()" class="btn-add">+ Añadir ataque</button>
     </div>
 
     <div class="form-actions">
