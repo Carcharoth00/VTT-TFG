@@ -2,7 +2,13 @@
   <header class="dashboard-header">
     <h1>VTT Nexus</h1>
     <div class="header-right">
-      <a routerLink="/profile" class="profile-link">👤 {{ currentUser?.username }}</a>
+      <a routerLink="/profile" class="profile-link">
+        <div class="user-avatar-small">
+          <img *ngIf="currentUser?.avatar" [src]="currentUser.avatar" class="avatar-img-small" alt="avatar" />
+          <span *ngIf="!currentUser?.avatar">{{ currentUser?.username?.charAt(0) }}</span>
+        </div>
+        {{ currentUser?.username }}
+      </a>
       <button (click)="logout()">Cerrar sesión</button>
     </div>
   </header>
