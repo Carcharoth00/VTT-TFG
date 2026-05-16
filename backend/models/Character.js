@@ -1,8 +1,13 @@
 const { pool } = require('../config/database');
 
+const parseField = (field) => {
+  if (!field) return null;
+  if (typeof field === 'string') return JSON.parse(field);
+  return field;
+};
+
 class Character {
 
-  // Obtener todas las fichas de una partida
   static async getByGame(gameId) {
     const [rows] = await pool.execute(
       'SELECT * FROM characters WHERE game_id = ?',
@@ -10,12 +15,11 @@ class Character {
     );
     return rows.map(r => ({
       ...r,
-      stats: r.stats ? JSON.parse(r.stats) : null,
-      skills: r.skills ? JSON.parse(r.skills) : null
+      stats: parseField(r.stats),
+      skills: parseField(r.skills)
     }));
   }
 
-  // Obtener fichas de un usuario en una partida
   static async getByUserAndGame(userId, gameId) {
     const [rows] = await pool.execute(
       'SELECT * FROM characters WHERE user_id = ? AND game_id = ?',
@@ -23,12 +27,11 @@ class Character {
     );
     return rows.map(r => ({
       ...r,
-      stats: r.stats ? JSON.parse(r.stats) : null,
-      skills: r.skills ? JSON.parse(r.skills) : null
+      stats: parseField(r.stats),
+      skills: parseField(r.skills)
     }));
   }
 
-  // Obtener ficha por ID
   static async findById(id) {
     const [rows] = await pool.execute(
       'SELECT * FROM characters WHERE id = ?',
@@ -37,12 +40,11 @@ class Character {
     if (!rows[0]) return null;
     return {
       ...rows[0],
-      stats: rows[0].stats ? JSON.parse(rows[0].stats) : null,
-      skills: rows[0].skills ? JSON.parse(rows[0].skills) : null
+      stats: parseField(rows[0].stats),
+      skills: parseField(rows[0].skills)
     };
   }
 
-  // Crear ficha
   static async create(data) {
     const { user_id, game_id, name, hp = 10, max_hp = 10, ac = 10, stats = null, skills = null, notes = null, avatar = null } = data;
 
@@ -54,7 +56,6 @@ class Character {
     return { id: result.insertId, user_id, game_id, name, hp, max_hp, ac, stats, skills, notes, avatar };
   }
 
-  // Actualizar ficha
   static async update(id, data) {
     const { name, hp, max_hp, ac, stats, skills, notes, avatar } = data;
 
@@ -76,7 +77,6 @@ class Character {
     return this.findById(id);
   }
 
-  // Eliminar ficha
   static async delete(id, userId) {
     const [result] = await pool.execute(
       'DELETE FROM characters WHERE id = ? AND user_id = ?',
@@ -85,7 +85,6 @@ class Character {
     return result.affectedRows > 0;
   }
 
-  //Vida
   static async updateHP(id, hp) {
     await pool.execute(
       'UPDATE characters SET hp = ? WHERE id = ?',
