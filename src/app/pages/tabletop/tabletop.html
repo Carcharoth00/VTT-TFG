@@ -69,17 +69,25 @@
       </button>
     </div>
 
-    <div class="control-section">
-      <h3>Fondo del Tablero</h3>
+    <div class="control-section" *ngIf="isGM">
+      <h3>🗺️ Mapas</h3>
       <input type="file" accept="image/*" (change)="onImageUpload($event)" #fileInput style="display: none;">
       <button (click)="fileInput.click()" class="btn-upload">
-        <span class="upload-icon">📁</span>
-        {{ backgroundImage ? 'Cambiar Imagen' : 'Subir Imagen' }}
+        <span class="upload-icon">📁</span>Subir mapa
       </button>
-      <p *ngIf="backgroundImage" class="success">✓ Imagen cargada correctamente</p>
-      <button *ngIf="backgroundImage" (click)="removeBackground(); fileInput.value=''" class="btn-danger">
-        🗑️ Eliminar Fondo
-      </button>
+
+      <div class="maps-list" *ngIf="maps.length > 0">
+        <div class="map-item" *ngFor="let map of maps" [class.map-active]="map.id === activeMapId">
+          <span class="map-name">{{ map.name }}</span>
+          <div class="map-actions">
+            <button (click)="activateMap(map.id)" title="Activar" [disabled]="map.id === activeMapId">
+              {{ map.id === activeMapId ? '✅' : '▶️' }}
+            </button>
+            <button (click)="deleteMap(map)" title="Eliminar" class="btn-danger-sm">🗑️</button>
+          </div>
+        </div>
+      </div>
+      <p *ngIf="maps.length === 0" class="empty-msg">No hay mapas subidos.</p>
     </div>
 
     <div class="control-section">

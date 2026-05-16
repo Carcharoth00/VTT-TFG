@@ -186,6 +186,12 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
               this.myCharacters = response.characters;
             }
           });
+          this.mapService.getMaps(+this.roomId).subscribe({
+            next: (response) => {
+              this.maps = response.maps;
+              this.cdr.detectChanges();
+            }
+          });
           this.initializeSocket();
           this.connectToRoom();
           this.mapService.getActiveMap(+this.roomId).subscribe({
@@ -984,5 +990,20 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       this.pixiService.updateTokenHP(token.id, event.hp, event.max_hp);
       this.socket.emit('update-token-hp', { roomId: this.roomId, tokenId: token.id, hp: event.hp });
     }
+  }
+  
+  deleteMap(map: GameMap) {
+    if (!confirm(`¿Eliminar el mapa "${map.name}"?`)) return;
+    this.mapService.deleteMap(map.id, +this.roomId).subscribe({
+      next: () => {
+        this.maps = this.maps.filter(m => m.id !== map.id);
+        if (this.activeMapId === map.id) {
+          this.activeMapId = null;
+          this.backgroundImage = null;
+          this.pixiService.setBackground(null);
+        }
+        this.cdr.detectChanges();
+      }
+    });
   }
 }

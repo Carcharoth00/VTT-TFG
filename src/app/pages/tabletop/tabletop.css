@@ -1630,3 +1630,50 @@ html {
 .btn-close:hover {
   color: #e2e8f0;
 }
+
+.maps-list {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.map-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.6rem;
+  background: #1e1e2e;
+  border-radius: 6px;
+  border: 1px solid #374151;
+}
+
+.map-item.map-active {
+  border-color: #10b981;
+}
+
+.map-name {
+  font-size: 0.8rem;
+  color: #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+
+.map-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.map-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0.2rem;
+}
+
+.btn-danger-sm {
+  color: #ef4444;
+}
