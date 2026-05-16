@@ -37,7 +37,7 @@
     </div>
 
 
-    <div class="control-section">
+    <div class="control-section" *ngIf="isGM">
       <h3>Cuadrícula</h3>
       <button (click)="toggleGrid()" class="btn-toggle-grid" [class.active]="showGrid">
         {{ showGrid ? '👁️ Cuadrícula visible' : '🚫 Cuadrícula oculta' }}

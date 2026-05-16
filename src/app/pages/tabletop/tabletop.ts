@@ -202,6 +202,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
                 this.gridRows = response.map.grid_rows || 15;
                 this.gridSize = response.map.grid_size || 50;
                 this.pixiService.setGridConfig(this.gridColumns, this.gridRows, this.gridSize);
+                this.pixiService.fitToScreen();
                 this.mapService.getMapImage(response.map.id).subscribe({
                   next: (img) => {
                     this.backgroundImage = img.image;
@@ -269,8 +270,18 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       this.chatMessages = state.chatMessages || [];
       this.pixiService.clearTokens();
       this.tokens.forEach(t => this.pixiService.addToken(t, this.isGM));
-      if (this.backgroundImage) {
-        this.pixiService.setBackground(this.backgroundImage);
+      if (state.backgroundImage) {
+        this.mapService.getMapImage(state.backgroundImage as any).subscribe({
+          next: (response) => {
+            this.backgroundImage = response.image;
+            this.pixiService.setBackground(response.image);
+            this.pixiService.fitToScreen();
+            this.cdr.detectChanges();
+          }
+        });
+      } else {
+        this.backgroundImage = null;
+        this.pixiService.setBackground(null);
       }
       this.cdr.markForCheck();
     });
@@ -314,6 +325,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
           next: (response) => {
             this.backgroundImage = response.image;
             this.pixiService.setBackground(response.image);
+            this.pixiService.fitToScreen();
             this.cdr.detectChanges();
           }
         });
@@ -991,7 +1003,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       this.socket.emit('update-token-hp', { roomId: this.roomId, tokenId: token.id, hp: event.hp });
     }
   }
-  
+
   deleteMap(map: GameMap) {
     if (!confirm(`¿Eliminar el mapa "${map.name}"?`)) return;
     this.mapService.deleteMap(map.id, +this.roomId).subscribe({

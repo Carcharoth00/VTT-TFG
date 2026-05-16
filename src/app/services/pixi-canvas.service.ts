@@ -736,4 +736,19 @@ export class PixiCanvasService {
         };
         requestAnimationFrame(animate);
     }
+
+    fitToScreen() {
+        const canvasWidth = this.app.canvas.width;
+        const canvasHeight = this.app.canvas.height;
+        const mapWidth = this.gridColumns * this.gridSize;
+        const mapHeight = this.gridRows * this.gridSize;
+
+        const scaleX = canvasWidth / mapWidth;
+        const scaleY = canvasHeight / mapHeight;
+        const scale = Math.min(scaleX, scaleY, 1);
+
+        this.worldContainer.scale.set(scale);
+        this.worldContainer.x = (canvasWidth - mapWidth * scale) / 2;
+        this.worldContainer.y = (canvasHeight - mapHeight * scale) / 2;
+    }
 }
