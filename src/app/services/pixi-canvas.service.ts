@@ -738,6 +738,10 @@ export class PixiCanvasService {
     }
 
     fitToScreen() {
+        this.runWhenReady(() => this._fitToScreen());
+    }
+
+    private _fitToScreen() {
         if (!this.app || !this.app.canvas) return;
 
         const canvasWidth = this.app.canvas.width;
