@@ -271,16 +271,14 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       this.pixiService.clearTokens();
       this.tokens.forEach(t => this.pixiService.addToken(t, this.isGM));
       if (state.backgroundImage) {
-        setTimeout(() => {
-          this.mapService.getMapImage(state.backgroundImage as any).subscribe({
-            next: (response) => {
-              this.backgroundImage = response.image;
-              this.pixiService.setBackground(response.image);
-              this.pixiService.fitToScreen();
-              this.cdr.detectChanges();
-            }
-          });
-        }, 500);
+        this.mapService.getMapImage(state.backgroundImage as any).subscribe({
+          next: (response) => {
+            this.backgroundImage = response.image;
+            this.pixiService.setBackground(response.image);
+            this.pixiService.fitToScreen();
+            this.cdr.detectChanges();
+          }
+        });
       } else {
         this.backgroundImage = null;
         this.pixiService.setBackground(null);
