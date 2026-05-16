@@ -40,12 +40,14 @@
 
       <p class="character-notes" *ngIf="char.notes">{{ char.notes }}</p>
 
+      <!-- Vista de ataques — solo lectura con botón de lanzar -->
       <div class="character-attacks" *ngIf="char.skills && char.skills.length > 0">
         <h5>⚔️ Ataques</h5>
         <div class="attack-item" *ngFor="let attack of char.skills">
-          <span class="attack-name">{{ attack.name }}</span>
-          <span class="attack-roll">+{{ attack.attackBonus }} ataque</span>
-          <span class="attack-damage">{{ attack.damageDice }}+{{ attack.damageBonus }} daño</span>
+          <div class="attack-info">
+            <span class="attack-name">{{ attack.name }}</span>
+            <span class="attack-stats">+{{ attack.attackBonus }} ataque · {{ attack.damageDice }}+{{ attack.damageBonus }} daño</span>
+          </div>
           <button class="btn-roll-attack" (click)="rollAttack(attack, char)">🎲</button>
         </div>
       </div>
@@ -61,7 +63,6 @@
       <input [(ngModel)]="form.name" placeholder="Nombre del personaje" />
     </div>
 
-    <!-- Avatar -->
     <div class="form-group">
       <label>Imagen del personaje</label>
       <div class="avatar-upload">
@@ -111,11 +112,27 @@
     <h5>⚔️ Ataques y habilidades</h5>
     <div class="attacks-list">
       <div class="attack-row" *ngFor="let attack of form.skills; let i = index">
-        <input [(ngModel)]="attack.name" placeholder="Nombre (ej: Espada larga)" class="attack-name" />
-        <input type="number" [(ngModel)]="attack.attackBonus" placeholder="+0" class="attack-bonus" />
-        <input [(ngModel)]="attack.damageDice" placeholder="1d8" class="attack-dice" />
-        <input type="number" [(ngModel)]="attack.damageBonus" placeholder="+0" class="attack-dmg-bonus" />
-        <button (click)="removeAttack(i)" class="btn-delete">🗑️</button>
+        <div class="attack-field">
+          <label>Nombre</label>
+          <input [(ngModel)]="attack.name" placeholder="Ej: Espada larga"/>
+        </div>
+        <div class="attack-row-fields">
+          <div class="attack-field">
+            <label>Bon. ataque</label>
+            <input type="number" [(ngModel)]="attack.attackBonus" placeholder="+0"/>
+          </div>
+          <div class="attack-field">
+            <label>Dado daño</label>
+            <input [(ngModel)]="attack.damageDice" placeholder="1d8"/>
+          </div>
+          <div class="attack-field">
+            <label>Bon. daño</label>
+            <input type="number" [(ngModel)]="attack.damageBonus" placeholder="+0"/>
+          </div>
+        </div>
+        <div class="attack-row-actions">
+          <button (click)="removeAttack(i)" class="btn-remove-attack">🗑️ Eliminar ataque</button>
+        </div>
       </div>
       <p *ngIf="form.skills.length === 0" class="empty-msg">Sin ataques añadidos.</p>
       <button (click)="addAttack()" class="btn-add">+ Añadir ataque</button>

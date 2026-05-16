@@ -326,3 +326,98 @@
 .attack-row input::placeholder {
   color: #6b7280;
 }
+
+.attack-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem;
+  background: #1e1e2e;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.attack-row input {
+  background: #0f0f1a;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  color: #e2e8f0;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.85rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.attack-row input::placeholder {
+  color: #6b7280;
+}
+
+.attack-row .btn-delete {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #ef4444;
+  padding: 0.2rem;
+}
+
+.attack-row-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+}
+
+.attack-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.attack-field label {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.attack-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.5rem;
+  background: #1e1e2e;
+  border-radius: 6px;
+  margin-bottom: 0.3rem;
+}
+
+.attack-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.attack-stats {
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.attack-row-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.4rem;
+}
+
+.btn-remove-attack {
+  background: rgba(239,68,68,0.1);
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
