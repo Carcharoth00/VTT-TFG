@@ -1476,3 +1476,90 @@ html {
   color: #ef4444;
   font-weight: 700;
 }
+
+.attack-result-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.attack-name-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.attack-formula {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.attack-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.attack-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.result-box {
+  width: 100%;
+  background: #1e1e2e;
+  border: 2px solid #374151;
+  border-radius: 8px;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.result-box strong {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #e2e8f0;
+  display: block;
+}
+
+.result-box.critical {
+  border-color: #fbbf24;
+}
+
+.result-box.critical strong {
+  color: #fbbf24;
+}
+
+.result-box.fumble {
+  border-color: #ef4444;
+}
+
+.result-box.fumble strong {
+  color: #ef4444;
+}
+
+.result-box .result-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: block;
+}
+
+.damage-box {
+  border-color: #ef4444;
+}
+
+.dice-rolls-inline {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.column-label {
+  font-size: 0.65rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

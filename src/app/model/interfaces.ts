@@ -34,6 +34,7 @@ export interface DiceRoll {
   results: number[];
   total: number;
   individualDice: { sides: number, result: number }[];
+  damageDice?: { sides: number, result: number }[];
   attackTotal?: number;
   damageTotal?: number;
   isCritical?: boolean;

@@ -193,21 +193,43 @@
             <div *ngIf="msg.type === 'dice' && msg.diceRoll" class="dice-result">
               <div class="dice-formula">🎲 {{ msg.diceRoll.formula }}</div>
 
-              <div *ngIf="msg.diceRoll.attackTotal !== undefined" class="attack-result">
-                <div class="attack-roll-result" [class.critical]="msg.diceRoll.isCritical"
-                  [class.fumble]="msg.diceRoll.isFumble">
-                  <span class="label">Ataque</span>
-                  <strong>{{ msg.diceRoll.attackTotal }}</strong>
-                  <span class="critical-label" *ngIf="msg.diceRoll.isCritical">⭐ CRÍTICO</span>
-                  <span class="fumble-label" *ngIf="msg.diceRoll.isFumble">💀 PIFIA</span>
-                </div>
-                <div class="damage-roll-result">
-                  <span class="label">Daño</span>
-                  <strong>{{ msg.diceRoll.damageTotal }}</strong>
+              <div *ngIf="msg.diceRoll.attackTotal !== undefined" class="attack-result-block">
+                <div class="attack-name-title">{{ msg.message }}</div>
+                <div class="attack-formula">{{ msg.diceRoll.formula }}</div>
+
+                <div class="attack-columns">
+                  <div class="attack-column">
+                    <span class="column-label">Ataque</span>
+                    <div class="result-box" [class.critical]="msg.diceRoll.isCritical"
+                      [class.fumble]="msg.diceRoll.isFumble">
+                      <strong>{{ msg.diceRoll.attackTotal }}</strong>
+                      <span *ngIf="msg.diceRoll.isCritical" class="result-label">⭐ CRÍTICO</span>
+                      <span *ngIf="msg.diceRoll.isFumble" class="result-label">💀 PIFIA</span>
+                    </div>
+                    <div class="dice-rolls-inline">
+                      <span class="die-result" [class.die-critical]="msg.diceRoll.individualDice[0].result === 20"
+                        [class.die-fumble]="msg.diceRoll.individualDice[0].result === 1">
+                        {{ msg.diceRoll.individualDice[0].result }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="attack-column">
+                    <span class="column-label">Daño</span>
+                    <div class="result-box damage-box">
+                      <strong>{{ msg.diceRoll.damageTotal }}</strong>
+                    </div>
+                    <div class="dice-rolls-inline">
+                      <span *ngFor="let die of msg.diceRoll.damageDice" class="die-result"
+                        [class.die-critical]="die.result === die.sides" [class.die-fumble]="die.result === 1">
+                        {{ die.result }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div class="dice-rolls">
+              <div class="dice-rolls" *ngIf="msg.diceRoll.attackTotal === undefined">
                 <span *ngFor="let die of msg.diceRoll.individualDice" class="die-result"
                   [class.die-critical]="die.result === die.sides" [class.die-fumble]="die.result === 1">
                   {{ die.result }}

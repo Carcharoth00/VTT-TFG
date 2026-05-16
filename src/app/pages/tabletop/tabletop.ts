@@ -885,16 +885,15 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   handleAttackRoll(event: { attack: any, character: any }) {
     const { attack, character } = event;
 
-    // Tirada de ataque: d20 + bonificador
     const attackRoll = Math.floor(Math.random() * 20) + 1;
     const attackTotal = attackRoll + attack.attackBonus;
-
-    // Tirada de daño
-    const damageRoll = this.parseDiceFormula(attack.damageDice);
-    const damageTotal = damageRoll ? damageRoll.total + attack.damageBonus : 0;
-
     const isCritical = attackRoll === 20;
     const isFumble = attackRoll === 1;
+
+    // Parsear solo los dados de daño, sin el bonificador
+    const damageRoll = this.parseDiceFormula(attack.damageDice);
+    const damageDice = (damageRoll?.individualDice || []).filter((d: any) => d.sides !== 20);
+    const damageTotal = damageRoll ? damageRoll.total + attack.damageBonus : 0;
 
     const message: ChatMessage = {
       id: Date.now().toString(),
@@ -904,13 +903,11 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       timestamp: new Date(),
       type: 'dice',
       diceRoll: {
-        formula: `${attack.name}: d20+${attack.attackBonus} ataque, ${attack.damageDice}+${attack.damageBonus} daño`,
-        results: [attackRoll, ...(damageRoll?.results || [])],
+        formula: `d20+${attack.attackBonus} ataque · ${attack.damageDice}+${attack.damageBonus} daño`,
+        results: [attackRoll, ...damageDice.map((d: any) => d.result)],
         total: attackTotal,
-        individualDice: [
-          { sides: 20, result: attackRoll },
-          ...(damageRoll?.individualDice || [])
-        ],
+        individualDice: [{ sides: 20, result: attackRoll }],
+        damageDice: damageDice,
         attackTotal,
         damageTotal,
         isCritical,
@@ -919,6 +916,8 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     };
 
     this.socket.emit('roll-dice', { roomId: this.roomId, message });
+    console.log('damageDice:', damageDice);
+    console.log('damageRoll:', damageRoll);
   }
 
 }
