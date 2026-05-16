@@ -54,6 +54,8 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   currentTurn = 0;
   currentRound = 1;
   showInitiativeBar = true;
+  showTargetModal = false;
+  pendingAttack: { attack: any, character: any } | null = null;
 
   // Tokens
   tokens: Token[] = [];
@@ -883,6 +885,25 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   }
 
   handleAttackRoll(event: { attack: any, character: any }) {
+    if (this.tokens.length === 0) {
+      this.executeAttack(event, null);
+      return;
+    }
+    this.pendingAttack = event;
+    this.showTargetModal = true;
+    this.cdr.detectChanges();
+  }
+
+  selectTarget(token: Token | null) {
+    this.showTargetModal = false;
+    if (this.pendingAttack) {
+      this.executeAttack(this.pendingAttack, token);
+      this.pendingAttack = null;
+    }
+    this.cdr.detectChanges();
+  }
+
+  executeAttack(event: { attack: any, character: any }, target: Token | null) {
     const { attack, character } = event;
 
     const attackRoll = Math.floor(Math.random() * 20) + 1;
@@ -890,16 +911,30 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     const isCritical = attackRoll === 20;
     const isFumble = attackRoll === 1;
 
-    // Parsear solo los dados de daño, sin el bonificador
     const damageRoll = this.parseDiceFormula(attack.damageDice);
     const damageDice = (damageRoll?.individualDice || []).filter((d: any) => d.sides !== 20);
     const damageTotal = damageRoll ? damageRoll.total + attack.damageBonus : 0;
+
+    let hit = true;
+    let targetAC = 0;
+
+    if (target) {
+      targetAC = target.ac || 0;
+      hit = isCritical || (!isFumble && attackTotal >= targetAC);
+
+      if (hit && target.hp !== null && target.hp !== undefined && target.max_hp) {
+        const newHP = Math.max(0, (target.hp || 0) - damageTotal);
+        target.hp = newHP;
+        this.pixiService.updateTokenHP(target.id, newHP, target.max_hp);
+        this.socket.emit('update-token-hp', { roomId: this.roomId, tokenId: target.id, hp: newHP });
+      }
+    }
 
     const message: ChatMessage = {
       id: Date.now().toString(),
       userId: this.socket.id || '',
       username: this.username,
-      message: `${character.name} usa ${attack.name}`,
+      message: `${character.name} usa ${attack.name}${target ? ` contra ${target.name || target.label}` : ''}`,
       timestamp: new Date(),
       type: 'dice',
       diceRoll: {
@@ -907,17 +942,17 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
         results: [attackRoll, ...damageDice.map((d: any) => d.result)],
         total: attackTotal,
         individualDice: [{ sides: 20, result: attackRoll }],
-        damageDice: damageDice,
+        damageDice,
         attackTotal,
         damageTotal,
         isCritical,
-        isFumble
+        isFumble,
+        hit: target ? hit : undefined,
+        targetAC: target ? targetAC : undefined
       }
     };
 
     this.socket.emit('roll-dice', { roomId: this.roomId, message });
-    console.log('damageDice:', damageDice);
-    console.log('damageRoll:', damageRoll);
   }
 
 }

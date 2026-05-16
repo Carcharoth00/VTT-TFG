@@ -1563,3 +1563,21 @@ html {
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+.hit-result {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.hit-result.hit {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.hit-result.miss {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}

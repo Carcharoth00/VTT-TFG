@@ -2,6 +2,7 @@ const Token = require('../models/Token');
 const ChatMessage = require('../models/ChatMessage');
 // Estado en memoria de las salas activas
 const rooms = new Map();
+const Character = require('../models/Character');
 
 function getOrCreateRoom(roomId) {
   if (!rooms.has(roomId)) {
@@ -81,6 +82,18 @@ function setupSocketHandlers(io) {
         console.log('Tokens ya en memoria:', room.tokens.length);
       }
 
+      // Al cargar tokens, incluir ac de la ficha vinculada
+      const tokensWithAC = await Promise.all(room.tokens.map(async t => {
+        if (t.character_id && !t.ac) {
+          try {
+            const char = await Character.findById(t.character_id);
+            if (char) t.ac = char.ac;
+          } catch (e) { }
+        }
+        return t;
+      }));
+      room.tokens = tokensWithAC;
+
       socket.emit('room-state', {
         tokens: room.tokens,
         gridConfig: room.gridConfig,
@@ -110,6 +123,7 @@ function setupSocketHandlers(io) {
         type: 'system'
       });
       io.to(roomId).emit('users-updated', getRoomUsers(room));
+
     });
 
     // Mover un token

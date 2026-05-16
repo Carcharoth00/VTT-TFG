@@ -11,6 +11,7 @@ export interface Token {
   conditions?: string[] | null;
   hp?: number | null;
   max_hp?: number | null;
+  ac?: number | null;
 }
 
 export interface GridConfig {
@@ -39,6 +40,8 @@ export interface DiceRoll {
   damageTotal?: number;
   isCritical?: boolean;
   isFumble?: boolean;
+  hit?: boolean;
+  targetAC?: number;
 }
 
 export interface RoomState {

@@ -196,7 +196,11 @@
               <div *ngIf="msg.diceRoll.attackTotal !== undefined" class="attack-result-block">
                 <div class="attack-name-title">{{ msg.message }}</div>
                 <div class="attack-formula">{{ msg.diceRoll.formula }}</div>
-
+                <div *ngIf="msg.diceRoll.hit !== undefined" class="hit-result" [class.hit]="msg.diceRoll.hit"
+                  [class.miss]="!msg.diceRoll.hit">
+                  {{ msg.diceRoll.hit ? '✅ IMPACTO' : '❌ FALLO' }}
+                  <small *ngIf="msg.diceRoll.targetAC"> (CA {{ msg.diceRoll.targetAC }})</small>
+                </div>
                 <div class="attack-columns">
                   <div class="attack-column">
                     <span class="column-label">Ataque</span>
@@ -387,6 +391,31 @@
       <div class="modal-actions">
         <button (click)="confirmMapUpload()">Confirmar</button>
         <button (click)="showMapModal = false; pendingMapFile = null">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" *ngIf="showTargetModal">
+    <div class="modal">
+      <h2>Seleccionar objetivo</h2>
+      <p style="color: #9ca3af; font-size: 0.875rem; margin-bottom: 1rem">
+        ¿A quién va dirigido el ataque?
+      </p>
+      <div class="character-selector">
+        <div class="character-option" *ngFor="let token of tokens" (click)="selectTarget(token)">
+          <img *ngIf="token.image" [src]="token.image" class="char-option-avatar" alt="token" />
+          <div *ngIf="!token.image" class="char-option-placeholder" [style.backgroundColor]="token.color">
+            {{ (token.name || token.label || '?').charAt(0) }}
+          </div>
+          <div>
+            <span>{{ token.name || token.label }}</span>
+            <small *ngIf="token.ac" style="display:block; color: #9ca3af">CA: {{ token.ac }} | ❤️ {{ token.hp }}/{{
+              token.max_hp }}</small>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top: 1rem">
+        <button (click)="selectTarget(null)">Sin objetivo</button>
+        <button (click)="showTargetModal = false; pendingAttack = null">Cancelar</button>
       </div>
     </div>
   </div>
