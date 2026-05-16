@@ -792,6 +792,8 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     this.libraryService.deleteItem(+this.roomId, item.id).subscribe({
       next: () => {
         this.libraryImages = this.libraryImages.filter(i => i.id !== item.id);
+        const libraryInput = document.querySelector('input[type=file]') as HTMLInputElement;
+        if (libraryInput) libraryInput.value = '';
         this.cdr.detectChanges();
       }
     });
