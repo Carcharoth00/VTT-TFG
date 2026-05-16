@@ -738,6 +738,8 @@ export class PixiCanvasService {
     }
 
     fitToScreen() {
+        if (!this.app || !this.app.canvas) return;
+
         const canvasWidth = this.app.canvas.width;
         const canvasHeight = this.app.canvas.height;
         const mapWidth = this.gridColumns * this.gridSize;
