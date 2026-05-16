@@ -94,6 +94,23 @@ function setupSocketHandlers(io) {
       }));
       room.tokens = tokensWithAC;
 
+      if (!room.backgroundImage) {
+        try {
+          const Map = require('../models/Map');
+          const activeMap = await Map.getActive(roomId);
+          if (activeMap) {
+            room.backgroundImage = activeMap.id;
+            room.gridConfig = {
+              size: activeMap.grid_size || 50,
+              columns: activeMap.grid_cols || 20,
+              rows: activeMap.grid_rows || 15
+            };
+          }
+        } catch (e) {
+          console.error('Error cargando mapa activo:', e);
+        }
+      }
+      
       socket.emit('room-state', {
         tokens: room.tokens,
         gridConfig: room.gridConfig,
