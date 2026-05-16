@@ -419,6 +419,10 @@ function setupSocketHandlers(io) {
       io.to(roomId).emit('ping', { x, y });
     });
 
+    socket.on('share-image', ({ roomId, image, name }) => {
+      io.to(roomId).emit('image-shared', { image, name });
+    });
+
   });
 
 }

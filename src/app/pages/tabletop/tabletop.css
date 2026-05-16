@@ -1581,3 +1581,52 @@ html {
   background: rgba(239, 68, 68, 0.2);
   color: #ef4444;
 }
+
+.shared-image-overlay {
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 200;
+}
+
+.shared-image-modal {
+  background: #1e1e2e;
+  border-radius: 12px;
+  border: 1px solid #374151;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.shared-image-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #374151;
+}
+
+.shared-image-header h3 {
+  color: #e2e8f0;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.shared-image-img {
+  max-width: 90vw;
+  max-height: 80vh;
+  object-fit: contain;
+}
+
+.btn-close {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.btn-close:hover {
+  color: #e2e8f0;
+}

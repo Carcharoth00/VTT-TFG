@@ -290,6 +290,7 @@
           <span class="library-name">{{ img.name }}</span>
           <div class="library-actions">
             <button (click)="placeLibraryToken(img)" title="Colocar en mapa">➕</button>
+            <button (click)="shareImage(img)" title="Compartir imagen">📢</button>
             <button (click)="removeLibraryImage(img)" title="Eliminar">🗑️</button>
           </div>
         </div>
@@ -417,6 +418,15 @@
         <button (click)="selectTarget(null)">Sin objetivo</button>
         <button (click)="showTargetModal = false; pendingAttack = null">Cancelar</button>
       </div>
+    </div>
+  </div>
+  <div class="modal-overlay shared-image-overlay" *ngIf="sharedImage" (click)="sharedImage = null">
+    <div class="shared-image-modal" (click)="$event.stopPropagation()">
+      <div class="shared-image-header">
+        <h3>{{ sharedImage.name }}</h3>
+        <button (click)="sharedImage = null" class="btn-close">✕</button>
+      </div>
+      <img [src]="sharedImage.image" class="shared-image-img" alt="handout" />
     </div>
   </div>
 </div>

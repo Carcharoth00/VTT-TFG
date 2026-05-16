@@ -8,8 +8,8 @@ class ChatMessage {
      JOIN users u ON cm.user_id = u.id 
      WHERE cm.game_id = ? 
      ORDER BY cm.created_at ASC 
-     LIMIT ?`,
-      [gameId, limit]
+     LIMIT ${parseInt(limit)}`,
+      [gameId]
     );
     return rows;
   }

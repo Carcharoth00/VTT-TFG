@@ -35,6 +35,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
   // Librería
   libraryImages: LibraryItem[] = [];
   selectedLibraryImage: { name: string, image: string } | null = null;
+  sharedImage: { image: string, name: string } | null = null;
 
   // Grid configuration
   gridSize = 50;
@@ -391,6 +392,15 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     this.socket.on('ping', (data: { x: number, y: number }) => {
       this.pixiService.showPing(data.x, data.y);
     });
+
+    this.socket.on('image-shared', (data: { image: string, name: string }) => {
+      this.sharedImage = data;
+      this.cdr.markForCheck();
+    });
+  }
+
+  shareImage(img: { name: string, image: string }) {
+    this.socket.emit('share-image', { roomId: this.roomId, image: img.image, name: img.name });
   }
 
   leaveRoom() {
