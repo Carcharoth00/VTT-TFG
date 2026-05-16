@@ -647,6 +647,19 @@ export class PixiCanvasService {
             barContainer.addChild(hpText);
 
             container.addChild(barContainer);
+            if (hp <= 0) {
+                const skull = new PIXI.Text({
+                    text: '💀',
+                    style: { fontSize: 24 }
+                });
+                skull.x = this.gridSize / 2 - skull.width / 2;
+                skull.y = this.gridSize / 2 - skull.height / 2;
+                skull.label = 'skull';
+                container.addChild(skull);
+            } else {
+                const existingSkull = container.getChildByLabel('skull');
+                if (existingSkull) container.removeChild(existingSkull);
+            }
         });
     }
 
