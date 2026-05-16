@@ -415,6 +415,10 @@ function setupSocketHandlers(io) {
       }
     });
 
+    socket.on('ping', ({ roomId, x, y }) => {
+      io.to(roomId).emit('ping', { x, y });
+    });
+
   });
 
 }

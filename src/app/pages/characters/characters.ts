@@ -13,6 +13,7 @@ import { CharacterService, Character, CharacterStats, CharacterAttack } from '..
 })
 export class CharactersComponent implements OnInit {
   @Output() onRollAttack = new EventEmitter<{ attack: CharacterAttack, character: Character }>();
+  @Output() onHPChange = new EventEmitter<{ characterId: number, hp: number, max_hp: number }>();
   @Input() gameId!: number;
   @Input() currentUserId!: number;
 
@@ -101,6 +102,11 @@ export class CharactersComponent implements OnInit {
         next: (response) => {
           const index = this.characters.findIndex(c => c.id === response.character.id);
           if (index !== -1) this.characters[index] = response.character;
+          this.onHPChange.emit({
+            characterId: response.character.id,
+            hp: response.character.hp,
+            max_hp: response.character.max_hp
+          });
           this.showCreateForm = false;
           this.cdr.detectChanges();
         },
@@ -113,6 +119,11 @@ export class CharactersComponent implements OnInit {
       this.characterService.create(this.gameId, this.form).subscribe({
         next: (response) => {
           this.characters.push(response.character);
+          this.onHPChange.emit({
+            characterId: response.character.id,
+            hp: response.character.hp,
+            max_hp: response.character.max_hp
+          });
           this.showCreateForm = false;
           this.resetForm();
           this.cdr.detectChanges();

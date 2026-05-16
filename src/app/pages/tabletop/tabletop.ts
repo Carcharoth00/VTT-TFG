@@ -153,6 +153,11 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
       }
       this.cdr.detectChanges();
     };
+
+    this.pixiService.onPing = (x, y) => {
+      this.pixiService.showPing(x, y);
+      this.socket.emit('ping', { roomId: this.roomId, x, y });
+    };
   }
 
   ngOnInit() {
@@ -381,6 +386,10 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
         this.pixiService.updateTokenHP(data.tokenId, data.hp, token.max_hp || 0);
         this.cdr.markForCheck();
       }
+    });
+
+    this.socket.on('ping', (data: { x: number, y: number }) => {
+      this.pixiService.showPing(data.x, data.y);
     });
   }
 
@@ -760,6 +769,7 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
+
   private handleKeyboard = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       this.showTokenModal = false;
@@ -953,6 +963,16 @@ export class Tabletop implements OnInit, OnDestroy, AfterViewInit {
     };
 
     this.socket.emit('roll-dice', { roomId: this.roomId, message });
+
   }
 
+  handleCharacterHPChange(event: { characterId: number, hp: number, max_hp: number }) {
+    const token = this.tokens.find(t => t.character_id === event.characterId);
+    if (token) {
+      token.hp = event.hp;
+      token.max_hp = event.max_hp;
+      this.pixiService.updateTokenHP(token.id, event.hp, event.max_hp);
+      this.socket.emit('update-token-hp', { roomId: this.roomId, tokenId: token.id, hp: event.hp });
+    }
+  }
 }

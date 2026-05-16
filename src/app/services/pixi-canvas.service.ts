@@ -41,6 +41,7 @@ export class PixiCanvasService {
 
     onTokenMoved?: (tokenId: number, x: number, y: number) => void;
     onTokenClick?: (tokenId: number) => void;
+    onPing?: (x: number, y: number) => void;
 
     async init(canvas: HTMLCanvasElement, width: number, height: number) {
         this.app = new PIXI.Application();
@@ -88,6 +89,9 @@ export class PixiCanvasService {
         const stage = this.app.stage;
         stage.eventMode = 'static';
         stage.hitArea = new PIXI.Rectangle(0, 0, 99999, 99999);
+        let pressTimer: any = null;
+        let pressX = 0;
+        let pressY = 0;
 
         this.app.canvas.addEventListener('wheel', (e) => {
             e.preventDefault();
@@ -104,9 +108,9 @@ export class PixiCanvasService {
         }, { passive: false });
 
         this.app.canvas.addEventListener('mousemove', (e) => {
-            if (this.isMeasuring) {
-                this.updateMeasure(e);
-                return;
+            if (pressTimer && (Math.abs(e.clientX - pressX) > 5 || Math.abs(e.clientY - pressY) > 5)) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
             }
             if (!this.isPanning) return;
             this.worldContainer.x += e.clientX - this.lastX;
@@ -116,9 +120,15 @@ export class PixiCanvasService {
         });
 
         this.app.canvas.addEventListener('mousedown', (e) => {
-            if (e.button === 0 && e.shiftKey) {
-                this.startMeasure(e);
-                return;
+            if (e.button === 0 && !e.altKey && !e.shiftKey) {
+                pressX = e.clientX;
+                pressY = e.clientY;
+                pressTimer = setTimeout(() => {
+                    const rect = this.app.canvas.getBoundingClientRect();
+                    const worldX = (e.clientX - rect.left - this.worldContainer.x) / this.worldContainer.scale.x;
+                    const worldY = (e.clientY - rect.top - this.worldContainer.y) / this.worldContainer.scale.y;
+                    this.onPing?.(worldX, worldY);
+                }, 600);
             }
             if (e.button === 1 || (e.button === 0 && e.altKey)) {
                 this.isPanning = true;
@@ -128,11 +138,9 @@ export class PixiCanvasService {
             }
         });
 
-        this.app.canvas.addEventListener('mouseup', (e) => {
-            if (this.isMeasuring) {
-                this.stopMeasure();
-                return;
-            }
+        this.app.canvas.addEventListener('mouseup', () => {
+            clearTimeout(pressTimer);
+            pressTimer = null;
             this.isPanning = false;
         });
         this.app.canvas.addEventListener('mouseleave', () => this.isPanning = false);
@@ -701,5 +709,31 @@ export class PixiCanvasService {
             this.measureText.destroy();
             this.measureText = null;
         }
+    }
+
+    showPing(x: number, y: number) {
+        const ping = new PIXI.Graphics();
+        ping.circle(0, 0, 20);
+        ping.fill({ color: 0xf59e0b, alpha: 0.8 });
+        ping.x = x;
+        ping.y = y;
+        this.worldContainer.addChild(ping);
+
+        // Animación: crecer y desaparecer
+        let scale = 1;
+        let alpha = 0.8;
+        const animate = () => {
+            scale += 0.05;
+            alpha -= 0.02;
+            ping.scale.set(scale);
+            ping.alpha = alpha;
+            if (alpha <= 0) {
+                this.worldContainer.removeChild(ping);
+                ping.destroy();
+            } else {
+                requestAnimationFrame(animate);
+            }
+        };
+        requestAnimationFrame(animate);
     }
 }

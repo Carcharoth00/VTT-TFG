@@ -47,7 +47,7 @@ router.post('/:gameId', async (req, res) => {
       return res.status(403).json({ error: 'No eres miembro de esta partida' });
     }
 
-    const { name, hp, max_hp, ac, stats, skills, notes } = req.body;
+    const { name, hp, max_hp, ac, stats, skills, notes, avatar } = req.body;
 
     if (!name || name.trim().length === 0) {
       return res.status(400).json({ error: 'El nombre es obligatorio' });
@@ -57,7 +57,7 @@ router.post('/:gameId', async (req, res) => {
       user_id: req.user.id,
       game_id: req.params.gameId,
       name: name.trim(),
-      hp, max_hp, ac, stats, skills, notes
+      hp, max_hp, ac, stats, skills, notes, avatar
     });
 
     res.status(201).json({ message: 'Ficha creada', character });

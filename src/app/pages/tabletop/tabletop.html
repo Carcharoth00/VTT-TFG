@@ -265,7 +265,7 @@
 
     <div class="panel-content" *ngIf="activePanel === 'characters'">
       <app-characters [gameId]="roomId ? +roomId : 0" [currentUserId]="authService.getCurrentUser()?.id || 0"
-        (onRollAttack)="handleAttackRoll($event)">
+        (onRollAttack)="handleAttackRoll($event)" (onHPChange)="handleCharacterHPChange($event)">
       </app-characters>
     </div>
 
