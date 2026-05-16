@@ -108,6 +108,10 @@ export class PixiCanvasService {
         }, { passive: false });
 
         this.app.canvas.addEventListener('mousemove', (e) => {
+            if (this.isMeasuring) {
+                this.updateMeasure(e);
+                return;
+            }
             if (pressTimer && (Math.abs(e.clientX - pressX) > 5 || Math.abs(e.clientY - pressY) > 5)) {
                 clearTimeout(pressTimer);
                 pressTimer = null;
@@ -120,6 +124,10 @@ export class PixiCanvasService {
         });
 
         this.app.canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 0 && e.shiftKey) {
+                this.startMeasure(e);
+                return;
+            }
             if (e.button === 0 && !e.altKey && !e.shiftKey) {
                 pressX = e.clientX;
                 pressY = e.clientY;
@@ -139,6 +147,10 @@ export class PixiCanvasService {
         });
 
         this.app.canvas.addEventListener('mouseup', () => {
+            if (this.isMeasuring) {
+                this.stopMeasure();
+                return;
+            }
             clearTimeout(pressTimer);
             pressTimer = null;
             this.isPanning = false;
